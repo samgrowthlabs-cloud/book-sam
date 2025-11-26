@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artigos - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/artigos.css">
+</head>
+<body>
+
+    <main class="container">
+        <section class="search-section">
+            <div class="search-header">
+                <h2>Artigos Financeiros</h2>
+                <p>Leia artigos especializados sobre finanças, economia e investimentos</p>
+            </div>
+            
+            <div class="filters">
+                <div class="search-box">
+                    <input type="text" id="searchArtigos" placeholder="Buscar artigos...">
+                    <button onclick="buscarArtigos()">🔍</button>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="categoriaFilter">
+                        <option value="">Todas as Categorias</option>
+                        <option value="investimentos">Investimentos</option>
+                        <option value="economia">Economia</option>
+                        <option value="financas_pessoais">Finanças Pessoais</option>
+                        <option value="mercado_financeiro">Mercado Financeiro</option>
+                        <option value="criptomoedas">Criptomoedas</option>
+                        <option value="planejamento">Planejamento</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="articles-list" id="articlesList">
+            <!-- Artigos serão carregados aqui -->
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/artigos.js"></script>
+    <script src="../js/header.js"></script>
+
+    
+</body>
+</html>

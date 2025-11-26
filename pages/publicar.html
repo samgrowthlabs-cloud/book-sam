@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicar - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/publicar.css">
+</head>
+<body>
+    <main class="container">
+        <div class="publish-container">
+            <div class="form-container">
+                <h2>Publicar Conteúdo</h2>
+                
+                <div class="publish-tabs">
+                    <button class="tab-btn active" onclick="abrirTab('artigo')">Artigo</button>
+                    <button class="tab-btn" onclick="abrirTab('livro')">Livro</button>
+                </div>
+                
+                <!-- Formulário de Artigo -->
+                <div id="form-artigo" class="tab-content active">
+                    <form id="artigoForm">
+                        <div class="form-group">
+                            <label for="artigoTitulo">Título do Artigo:</label>
+                            <input type="text" id="artigoTitulo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="artigoCategoria">Categoria:</label>
+                            <select id="artigoCategoria" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="investimentos">Investimentos</option>
+                                <option value="economia">Economia</option>
+                                <option value="financas_pessoais">Finanças Pessoais</option>
+                                <option value="mercado_financeiro">Mercado Financeiro</option>
+                                <option value="criptomoedas">Criptomoedas</option>
+                                <option value="planejamento">Planejamento</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="artigoConteudo">Conteúdo (Markdown):</label>
+                            <textarea id="artigoConteudo" placeholder="Digite seu artigo em Markdown..." required></textarea>
+                            <div class="markdown-help">
+                                <small>
+                                    <strong>Dica:</strong> Use Markdown para formatar seu texto. 
+                                    <br>**negrito**, *itálico*, # Título, ## Subtítulo, - lista, 1. lista numerada, `código`
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">Publicar Artigo</button>
+                    </form>
+                </div>
+
+                <!-- Formulário de Livro -->
+                <div id="form-livro" class="tab-content">
+                    <form id="livroForm">
+                        <div class="form-group">
+                            <label for="livroTitulo">Título do Livro:</label>
+                            <input type="text" id="livroTitulo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="livroGenero">Gênero:</label>
+                            <select id="livroGenero" required>
+                                <option value="">Selecione um gênero</option>
+                                <option value="Matemática Financeira">Matemática Financeira</option>
+                                <option value="Economia">Economia</option>
+                                <option value="Investimentos">Investimentos</option>
+                                <option value="Negócios">Negócios</option>
+                                <option value="História Financeira">História Financeira</option>
+                                <option value="Programação Financeira">Programação Financeira</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="livroCategoria">Categoria:</label>
+                            <select id="livroCategoria" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="finance">Finanças</option>
+                                <option value="math">Matemática</option>
+                                <option value="programming">Programação</option>
+                                <option value="business">Negócios</option>
+                                <option value="history">História</option>
+                                <option value="economics">Economia</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="livroDescricao">Descrição:</label>
+                            <textarea id="livroDescricao" placeholder="Descreva o livro..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="livroLink">Link do PDF:</label>
+                            <input type="url" id="livroLink" placeholder="https://exemplo.com/livro.pdf" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">Publicar Livro</button>
+                    </form>
+                </div>
+
+                <div id="publishMessage" class="message"></div>
+                
+                <div id="publishMessage" class="message"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/publicar.js"></script>
+    <script src="../js/header.js"></script>
+
+    
+</body>
+</html>

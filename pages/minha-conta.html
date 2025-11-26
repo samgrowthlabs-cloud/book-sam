@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/minha-conta.css">
+</head>
+<body>
+    <!-- Header será injetado automaticamente pelo header.js -->
+
+    <main class="container">
+        <div class="account-header">
+            <h2>Minha Conta</h2>
+            <div class="user-info">
+                <span id="userName"></span>
+                <button onclick="sair()" class="btn-sair">Sair</button>
+            </div>
+        </div>
+
+        <div class="account-tabs">
+            <button class="tab-btn active" onclick="abrirTab('meus-artigos')">Meus Artigos</button>
+            <button class="tab-btn" onclick="abrirTab('meus-livros')">Meus Livros</button>
+            <button class="tab-btn" onclick="abrirTab('estatisticas')">Estatísticas</button>
+        </div>
+
+        <!-- Meus Artigos -->
+        <div id="meus-artigos" class="tab-content active">
+            <div class="section-header">
+                <h3>Meus Artigos Publicados</h3>
+                <span class="count-badge" id="artigosCount">0 artigos</span>
+            </div>
+            <div class="content-grid" id="meusArtigosGrid">
+                <!-- Artigos serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Meus Livros -->
+        <div id="meus-livros" class="tab-content">
+            <div class="section-header">
+                <h3>Meus Livros Publicados</h3>
+                <span class="count-badge" id="livrosCount">0 livros</span>
+            </div>
+            <div class="content-grid" id="meusLivrosGrid">
+                <!-- Livros serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div id="estatisticas" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalArtigos">0</div>
+                    <div class="stat-label">Artigos Publicados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalLivros">0</div>
+                    <div class="stat-label">Livros Publicados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalConteudos">0</div>
+                    <div class="stat-label">Total de Conteúdos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="primeiraPublicacao">-</div>
+                    <div class="stat-label">Primeira Publicação</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Edição -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">Editar Conteúdo</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <input type="hidden" id="editTipo">
+                
+                <div class="form-group">
+                    <label for="editTitulo">Título:</label>
+                    <input type="text" id="editTitulo" required>
+                </div>
+                
+                <div id="editArtigoFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="editCategoria">Categoria:</label>
+                        <select id="editCategoria" required>
+                            <option value="investimentos">Investimentos</option>
+                            <option value="economia">Economia</option>
+                            <option value="financas_pessoais">Finanças Pessoais</option>
+                            <option value="mercado_financeiro">Mercado Financeiro</option>
+                            <option value="criptomoedas">Criptomoedas</option>
+                            <option value="planejamento">Planejamento</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editConteudo">Conteúdo:</label>
+                        <textarea id="editConteudo" rows="10" required></textarea>
+                    </div>
+                </div>
+                
+                <div id="editLivroFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="editGenero">Gênero:</label>
+                        <select id="editGenero" required>
+                            <option value="Matemática Financeira">Matemática Financeira</option>
+                            <option value="Economia">Economia</option>
+                            <option value="Investimentos">Investimentos</option>
+                            <option value="Negócios">Negócios</option>
+                            <option value="História Financeira">História Financeira</option>
+                            <option value="Programação Financeira">Programação Financeira</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLivroCategoria">Categoria:</label>
+                        <select id="editLivroCategoria" required>
+                            <option value="finance">Finanças</option>
+                            <option value="math">Matemática</option>
+                            <option value="programming">Programação</option>
+                            <option value="business">Negócios</option>
+                            <option value="history">História</option>
+                            <option value="economics">Economia</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescricao">Descrição:</label>
+                        <textarea id="editDescricao" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLink">Link do PDF:</label>
+                        <input type="url" id="editLink" required>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarExclusao()">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content confirm-modal">
+            <h3>Confirmar Exclusão</h3>
+            <p>Tem certeza que deseja excluir este conteúdo? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="excluirConteudo()">Sim, Excluir</button>
+                <button class="btn btn-secondary" onclick="fecharConfirmacao()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/minha-conta.js"></script>
+    <script src="../js/header.js"></script>
+</body>
+</html>

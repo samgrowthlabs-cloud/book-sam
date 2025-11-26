@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header será injetado pelo header-index.js -->
+
+    <main class="container">
+        <section class="search-section">
+            <div class="search-header">
+                <h2>Biblioteca de Finanças</h2>
+                <p>Explore nossa coleção de livros sobre finanças, economia e negócios</p>
+            </div>
+            
+            <div class="filters">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar livros...">
+                    <button onclick="buscarLivros()">🔍 Buscar</button>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="generoFilter">
+                        <option value="">Todos os Gêneros</option>
+                        <option value="Matemática Financeira">Matemática Financeira</option>
+                        <option value="Economia">Economia</option>
+                        <option value="Investimentos">Investimentos</option>
+                        <option value="Negócios">Negócios</option>
+                        <option value="História Financeira">História Financeira</option>
+                        <option value="Programação Financeira">Programação Financeira</option>
+                    </select>
+                    
+                    <select id="categoriaFilter">
+                        <option value="">Todas as Categorias</option>
+                        <option value="finance">Finanças</option>
+                        <option value="math">Matemática</option>
+                        <option value="programming">Programação</option>
+                        <option value="business">Negócios</option>
+                        <option value="history">História</option>
+                        <option value="economics">Economia</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="books-grid" id="booksGrid">
+            <!-- Livros serão carregados aqui -->
+        </section>
+
+        <!-- Modal do PDF -->
+        <div id="pdfModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div class="pdf-container">
+                    <iframe id="pdfViewer" src="" width="100%" height="600px"></iframe>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/livros.js"></script>
+
+    
+</body>
+</html>

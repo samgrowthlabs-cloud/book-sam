@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+
+    <main class="container">
+        <div class="login-container">
+            <div class="form-container">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="usuario">Usuário:</label>
+                        <input type="text" id="usuario" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="senha">Senha:</label>
+                        <input type="password" id="senha" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">Entrar</button>
+                </form>
+                
+                <div class="login-links">
+                    <p>Não tem conta? <a href="registro.html">Cadastre-se</a></p>
+                </div>
+                
+                <div id="loginMessage" class="message"></div>
+            </div>
+        </div>
+    </main>
+    <!-- bcryptjs (use esse CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
+    <!-- supabase + config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+
+    <!-- seu registro.js -->
+    <script src="../js/login.js"></script>
+
+    <script src="../js/header.js"></script>
+
+    
+</body>
+</html>

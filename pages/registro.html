@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+    <main class="container">
+        <div class="login-container">
+            <div class="form-container">
+                <h2>Criar Conta</h2>
+                <form id="registroForm">
+                    <div class="form-group">
+                        <label for="novoUsuario">Usuário:</label>
+                        <input type="text" id="novoUsuario" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="novaSenha">Senha:</label>
+                        <input type="password" id="novaSenha" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmarSenha">Confirmar Senha:</label>
+                        <input type="password" id="confirmarSenha" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">Criar Conta</button>
+                </form>
+                
+                <div class="login-links">
+                    <p>Já tem conta? <a href="login.html">Faça login</a></p>
+                </div>
+                
+                <div id="registroMessage" class="message"></div>
+            </div>
+        </div>
+    </main>
+    <!-- bcryptjs (use esse CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
+    <!-- supabase + config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+
+    <!-- seu registro.js -->
+    <script src="../js/registro.js"></script>
+    <script src="../js/header.js"></script>
+
+    
+</body>
+</html>
