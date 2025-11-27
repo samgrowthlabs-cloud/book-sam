@@ -1,4 +1,4 @@
-// admin.js - COM ESTATÍSTICAS FUNCIONANDO
+// admin.js - Versão RPC-compliant (usa rpc_* no Supabase)
 class AdminSystem {
     constructor() {
         this.currentUser = null;
@@ -55,14 +55,12 @@ class AdminSystem {
             console.log(`✅ ${this.allUsers.length} usuários carregados`);
             this.displayUsers(this.allUsers);
             this.updateStats(this.allUsers); // ATUALIZAR ESTATÍSTICAS
-            
         } catch (error) {
             console.error('❌ Erro ao carregar usuários:', error);
             alert('Erro ao carregar usuários');
         }
     }
 
-    // MÉTODO PARA ATUALIZAR ESTATÍSTICAS
     updateStats(users) {
         console.log('📊 Atualizando estatísticas...', users);
         
@@ -72,34 +70,15 @@ class AdminSystem {
         const moderatorUsers = users.filter(u => u.access_level === 'moderator').length;
         const staffUsers = adminUsers + moderatorUsers;
 
-        console.log('Estatísticas calculadas:', {
-            totalUsers,
-            bannedUsers,
-            adminUsers,
-            moderatorUsers,
-            staffUsers
-        });
-
-        // ATUALIZAR OS ELEMENTOS NO HTML
         const totalElement = document.getElementById('totalUsers');
         const bannedElement = document.getElementById('bannedUsers');
         const adminElement = document.getElementById('adminUsers');
 
-        if (totalElement) {
-            totalElement.textContent = totalUsers;
-            console.log('Total atualizado:', totalUsers);
-        }
-        if (bannedElement) {
-            bannedElement.textContent = bannedUsers;
-            console.log('Banidos atualizado:', bannedUsers);
-        }
-        if (adminElement) {
-            adminElement.textContent = staffUsers;
-            console.log('Staff atualizado:', staffUsers);
-        }
+        if (totalElement) totalElement.textContent = totalUsers;
+        if (bannedElement) bannedElement.textContent = bannedUsers;
+        if (adminElement) adminElement.textContent = staffUsers;
     }
 
-    // MÉTODO DISPLAYUSERS
     displayUsers(users) {
         const container = document.getElementById('usersContainer');
         if (!container) return;
@@ -124,6 +103,7 @@ class AdminSystem {
                                 ${user.access_level === 'moderator' ? '<span class="badge moderator-badge">🛡️ Moderador</span>' : ''}
                                 ${user.verified ? '<span class="badge verified-badge">✅ Verificado</span>' : ''}
                                 ${user.is_banned ? '<span class="badge banned-badge">🚫 Banido</span>' : ''}
+                                ${user.is_deleted ? '<span class="badge deleted-badge">🗑️ Deletado</span>' : ''}
                                 ${!canActOnUser ? '<span class="badge protected-badge">🛡️ Protegido</span>' : ''}
                             </div>
                         </div>
@@ -132,7 +112,7 @@ class AdminSystem {
                             <p><strong>ID:</strong> ${user.id}</p>
                             <p><strong>Nível:</strong> ${isAdmin ? '👑 Administrador' : user.access_level === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}</p>
                             <p><strong>Registro:</strong> ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                            <p><strong>Status:</strong> ${user.is_banned ? '🚫 Banido' : '✅ Ativo'}</p>
+                            <p><strong>Status:</strong> ${user.is_banned ? '🚫 Banido' : user.is_deleted ? '🗑️ Deletado' : '✅ Ativo'}</p>
                             <p><strong>Verificado:</strong> ${user.verified ? '✅ Sim' : '❌ Não'}</p>
                             
                             ${!canActOnUser ? `
@@ -141,7 +121,7 @@ class AdminSystem {
                                     <p>Esta conta pertence a um administrador e só pode ser gerenciada por outros administradores.</p>
                                 </div>
                             ` : ''}
-                            
+
                             ${user.is_banned ? `
                                 <div class="ban-info">
                                     <strong>🚫 DETALHES DO BANIMENTO</strong>
@@ -151,41 +131,35 @@ class AdminSystem {
                                     ` : '<p><strong>Duração:</strong> Permanente</p>'}
                                 </div>
                             ` : ''}
+
+                            ${user.is_deleted ? `
+                                <div class="deleted-info">
+                                    <strong>🗑️ USUÁRIO DELETADO</strong>
+                                    <p>Conteúdo marcado como oculto. Registro mantido para auditoria.</p>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                     
                     <div class="user-actions">
-                        <!-- BOTÕES VERIFICAR/DESVERIFICAR -->
                         ${canActOnUser ? `
                             ${!user.verified ? `
-                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">
-                                    ✅ Verificar
-                                </button>
+                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">✅ Verificar</button>
                             ` : `
-                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">
-                                    ❌ Desverificar
-                                </button>
+                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">❌ Desverificar</button>
                             `}
                         ` : ''}
 
-                        <!-- BOTÕES BANIR/DESBANIR -->
                         ${canActOnUser ? `
                             ${!user.is_banned ? `
-                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">
-                                    🚫 Banir
-                                </button>
+                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">🚫 Banir</button>
                             ` : `
-                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">
-                                    ✅ Desbanir
-                                </button>
+                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">✅ Desbanir</button>
                             `}
                         ` : ''}
 
-                        <!-- BOTÕES APENAS PARA ADMIN E APENAS EM USUÁRIOS NÃO-ADMIN -->
                         ${this.userLevel === 'admin' && canActOnUser ? `
-                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">
-                                🗑️ Excluir
-                            </button>
+                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">🗑️ Excluir</button>
 
                             <div class="access-level-actions">
                                 <select onchange="adminSystem.changeAccessLevel('${user.id}', this.value)" class="access-select">
@@ -198,134 +172,107 @@ class AdminSystem {
 
                         ${!canActOnUser ? `
                             <div class="protected-actions">
-                                <button class="btn btn-protected" disabled>
-                                    🛡️ Protegido
-                                </button>
+                                <button class="btn btn-protected" disabled>🛡️ Protegido</button>
                                 <small>Apenas administradores podem gerenciar esta conta</small>
                             </div>
                         ` : ''}
 
-                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">
-                            📊 Detalhes
-                        </button>
+                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">📊 Detalhes</button>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // MÉTODOS DE AÇÃO - ATUALIZAM AS ESTATÍSTICAS APÓS AÇÃO
+    // Ações via RPCs (usa funções seguras no DB)
     async verifyUser(userId) {
         try {
-            const { error } = await window.supabase
-                .from('usuarios')
-                .update({
-                    verified: true
-                })
-                .eq('id', userId);
-
+            const { error } = await window.supabase.rpc('rpc_verify_user', {
+                p_target: Number(userId),
+                p_verified: true,
+                p_notes: 'Verified via admin panel'
+            });
             if (error) throw error;
-
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
+            await this.loadUsers();
             alert('✅ Usuário verificado com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao verificar usuário:', error);
-            alert('❌ Erro ao verificar usuário');
+        } catch (err) {
+            console.error('Erro ao verificar usuário:', err);
+            alert('❌ Erro ao verificar usuário: ' + (err.message || JSON.stringify(err)));
         }
     }
 
     async unverifyUser(userId) {
         try {
-            const { error } = await window.supabase
-                .from('usuarios')
-                .update({
-                    verified: false
-                })
-                .eq('id', userId);
-
+            const { error } = await window.supabase.rpc('rpc_verify_user', {
+                p_target: Number(userId),
+                p_verified: false,
+                p_notes: 'Unverified via admin panel'
+            });
             if (error) throw error;
-
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
+            await this.loadUsers();
             alert('✅ Verificação removida com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao remover verificação:', error);
-            alert('❌ Erro ao remover verificação');
+        } catch (err) {
+            console.error('Erro ao remover verificação:', err);
+            alert('❌ Erro ao remover verificação: ' + (err.message || JSON.stringify(err)));
         }
     }
 
     banUserPrompt(userId) {
-        const reason = prompt('Digite o motivo do banimento:');
-        if (!reason) return;
-        
-        const duration = prompt('Duração do banimento (dias). Digite "permanent" para banimento permanente:');
-        if (!duration) return;
+        // abre modal style (já existe modal no HTML). Preenche hidden inputs e mostra modal.
+        const modal = document.getElementById('banModal');
+        if (!modal) {
+            // fallback: prompt
+            const reason = prompt('Digite o motivo do banimento:');
+            if (!reason) return;
+            const duration = prompt('Duração do banimento (dias). Digite "permanent" para banimento permanente:');
+            if (!duration) return;
+            this.banUser(userId, reason, duration);
+            return;
+        }
 
-        this.banUser(userId, reason, duration);
+        // popula form com target id
+        modal.dataset.targetUser = userId;
+        modal.style.display = 'block';
     }
 
     async banUser(userId, reason, duration) {
         try {
             let bannedUntil = null;
-            
             if (duration !== 'permanent') {
                 const days = parseInt(duration);
-                bannedUntil = new Date();
-                bannedUntil.setDate(bannedUntil.getDate() + days);
+                const dt = new Date();
+                dt.setDate(dt.getDate() + days);
+                bannedUntil = dt.toISOString();
             }
 
-            const { data: user, error: fetchError } = await window.supabase
-                .from('usuarios')
-                .select('ban_count')
-                .eq('id', userId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            const currentBanCount = user.ban_count || 0;
-            const newBanCount = currentBanCount + 1;
-
-            const { error } = await window.supabase
-                .from('usuarios')
-                .update({
-                    is_banned: true,
-                    ban_reason: reason,
-                    banned_until: bannedUntil,
-                    ban_count: newBanCount
-                })
-                .eq('id', userId);
-
+            const { error } = await window.supabase.rpc('rpc_ban_user', {
+                p_target: Number(userId),
+                p_reason: reason,
+                p_until: bannedUntil
+            });
             if (error) throw error;
 
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
+            await this.loadUsers();
             alert('✅ Usuário banido com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao banir usuário:', error);
-            alert('❌ Erro ao banir usuário: ' + error.message);
+        } catch (err) {
+            console.error('Erro ao banir usuário:', err);
+            alert('❌ Erro ao banir usuário: ' + (err.message || JSON.stringify(err)));
         }
     }
 
     async unbanUser(userId) {
         try {
-            const { error } = await window.supabase
-                .from('usuarios')
-                .update({
-                    is_banned: false,
-                    ban_reason: null,
-                    banned_until: null
-                })
-                .eq('id', userId);
-
+            const { error } = await window.supabase.rpc('rpc_unban_user', {
+                p_target: Number(userId),
+                p_note: 'Unbanned via admin panel'
+            });
             if (error) throw error;
 
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
+            await this.loadUsers();
             alert('✅ Usuário desbanido com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao desbanir usuário:', error);
-            alert('❌ Erro ao desbanir usuário');
+        } catch (err) {
+            console.error('Erro ao desbanir usuário:', err);
+            alert('❌ Erro ao desbanir usuário: ' + (err.message || JSON.stringify(err)));
         }
     }
 
@@ -335,34 +282,23 @@ class AdminSystem {
             return;
         }
 
-        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
+        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação ocultará conteúdo e marcará o usuário como deletado.')) {
             return;
         }
 
         try {
-            await window.supabase
-                .from('artigos')
-                .delete()
-                .eq('autor_id', userId);
-
-            await window.supabase
-                .from('livros')
-                .delete()
-                .eq('autor_id', userId);
-
-            const { error } = await window.supabase
-                .from('usuarios')
-                .delete()
-                .eq('id', userId);
-
+            // chama RPC de soft delete
+            const { error } = await window.supabase.rpc('rpc_soft_delete_user', {
+                p_target: Number(userId),
+                p_reason: 'Deleted by admin via panel'
+            });
             if (error) throw error;
 
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
-            alert('✅ Usuário excluído com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao excluir usuário:', error);
-            alert('❌ Erro ao excluir usuário');
+            await this.loadUsers();
+            alert('✅ Usuário excluído (soft-delete) com sucesso!');
+        } catch (err) {
+            console.error('Erro ao excluir usuário:', err);
+            alert('❌ Erro ao excluir usuário: ' + (err.message || JSON.stringify(err)));
         }
     }
 
@@ -371,24 +307,17 @@ class AdminSystem {
             alert('❌ Apenas administradores podem alterar níveis de acesso!');
             return;
         }
-
         try {
-            const { error } = await window.supabase
-                .from('usuarios')
-                .update({ 
-                    access_level: newLevel,
-                    is_admin: newLevel === 'admin'
-                })
-                .eq('id', userId);
-
+            const { error } = await window.supabase.rpc('rpc_set_access_level', {
+                p_target: Number(userId),
+                p_new_level: newLevel
+            });
             if (error) throw error;
-
-            await this.loadUsers(); // ISSO ATUALIZA AS ESTATÍSTICAS
-            alert(`✅ Nível de acesso alterado para ${newLevel === 'admin' ? '👑 Administrador' : newLevel === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}!`);
-            
-        } catch (error) {
-            console.error('Erro ao alterar nível de acesso:', error);
-            alert('❌ Erro ao alterar nível de acesso');
+            await this.loadUsers();
+            alert('✅ Nível de acesso alterado!');
+        } catch (err) {
+            console.error(err);
+            alert('❌ Erro ao alterar nível: ' + (err.message || JSON.stringify(err)));
         }
     }
 
@@ -404,6 +333,7 @@ class AdminSystem {
 🚫 BANIDO: ${user.is_banned ? 'Sim' : 'Não'}
 ${user.is_banned ? `📋 MOTIVO BAN: ${user.ban_reason || 'Não especificado'}` : ''}
 ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleString('pt-BR')}` : ''}
+🗑️ DELETADO: ${user.is_deleted ? 'Sim' : 'Não'}
             `.trim();
             
             alert('📊 DETALHES DO USUÁRIO\n\n' + details);
@@ -418,13 +348,42 @@ ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleStr
                 const modal = e.target.closest('.modal');
                 if (modal) {
                     modal.style.display = 'none';
+                    modal.dataset.targetUser = '';
                 }
             });
         });
 
+        // Ban modal submit
+        const banForm = document.getElementById('banForm');
+        if (banForm) {
+            banForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const modal = document.getElementById('banModal');
+                const targetId = modal?.dataset?.targetUser;
+                const reasonInput = document.getElementById('banReason');
+                const durationSelect = document.getElementById('banDuration');
+
+                if (!targetId) {
+                    alert('Usuário alvo inválido.');
+                    return;
+                }
+                const reason = reasonInput.value.trim();
+                const duration = durationSelect.value;
+
+                await this.banUser(targetId, reason, duration);
+                
+                // limpar e fechar modal
+                reasonInput.value = '';
+                durationSelect.value = '7';
+                modal.style.display = 'none';
+                modal.dataset.targetUser = '';
+            });
+        }
+
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
+                e.target.dataset.targetUser = '';
             }
         });
 
@@ -443,7 +402,7 @@ ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleStr
             default: filtered = this.allUsers;
         }
         this.displayUsers(filtered);
-        this.updateStats(filtered); // ATUALIZAR ESTATÍSTICAS COM FILTRO
+        this.updateStats(filtered);
     }
 
     filterUsers() {
