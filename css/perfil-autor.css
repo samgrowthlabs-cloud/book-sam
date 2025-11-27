@@ -1,4 +1,4 @@
-/* perfil-autor.css */
+/* perfil-autor.css - VERSÃO COM ALTURAS IGUAIS */
 .profile-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -53,15 +53,12 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Adicione isso no perfil-autor.css */
 .stat-date {
     display: block;
     font-size: 1rem;
     font-weight: 600;
     color: #000;
 }
-
-
 
 .stat-number {
     display: block;
@@ -85,11 +82,13 @@
     text-align: center;
 }
 
+/* GRID COM CARDS DE ALTURA IGUAL */
 .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 2rem;
     margin-bottom: 3rem;
+    align-items: stretch; /* Garante que todos os cards tenham a mesma altura */
 }
 
 .article-card-profile {
@@ -100,6 +99,11 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* OCUPA TODA A ALTURA DISPONÍVEL */
+    min-height: 300px; /* ALTURA MÍNIMA FIXA */
+    position: relative;
 }
 
 .article-card-profile:hover {
@@ -109,9 +113,11 @@
 
 .article-card-header {
     display: flex;
-    justify-content: between;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .article-category {
@@ -121,41 +127,74 @@
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .article-date {
     color: #666;
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .article-title-profile {
     font-size: 1.3rem;
     font-weight: 700;
     color: #000;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
     line-height: 1.3;
+    /* Limita a 2 linhas */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 3.2em; /* Altura fixa para 2 linhas */
 }
 
 .article-excerpt-profile {
     color: #666;
     line-height: 1.5;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    flex: 1;
+    /* Limita a 3 linhas */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 4.5em; /* Altura fixa para 3 linhas */
+}
+
+/* BOTÃO SEMPRE NA MESMA POSIÇÃO */
+.article-card-footer {
+    margin-top: auto; /* Empurra o botão para a base */
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .read-more-btn {
     background: transparent;
     color: #000;
     border: 2px solid #000;
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
 }
 
 .read-more-btn:hover {
     background: #000;
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .profile-actions {
@@ -174,6 +213,9 @@
     transition: all 0.3s ease;
     border: none;
     font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .btn-primary {
@@ -213,6 +255,7 @@
     background: #f8f9fa;
     border-radius: 12px;
     border: 2px dashed #ddd;
+    grid-column: 1 / -1;
 }
 
 /* Responsividade */
@@ -234,10 +277,14 @@
         gap: 1.5rem;
     }
     
+    .article-card-profile {
+        min-height: 280px; /* Altura menor em mobile */
+    }
+    
     .author-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 2rem;
+        gap: 1rem;
         margin: 2rem 0;
         max-width: 600px;
         margin-left: auto;
@@ -256,6 +303,43 @@
     .btn {
         width: 100%;
         max-width: 300px;
+        justify-content: center;
+    }
+    
+    .article-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .article-category,
+    .article-date {
+        align-self: flex-start;
+    }
+    
+    .article-title-profile {
+        min-height: 2.8em;
+        font-size: 1.2rem;
+    }
+    
+    .article-excerpt-profile {
+        min-height: 4em;
+    }
+}
+
+@media (max-width: 480px) {
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .article-card-profile {
+        min-height: 260px;
+        padding: 1.25rem;
+    }
+    
+    .article-title-profile {
+        font-size: 1.1rem;
+        min-height: 2.6em;
     }
 }
 
@@ -306,4 +390,64 @@
 .unverified-badge-profile img {
     width: 18px;
     height: 18px;
+}
+
+/* Estados de loading e erro */
+.loading-articles {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+}
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #ddd;
+}
+
+/* Efeitos visuais extras */
+.article-card-profile {
+    position: relative;
+    overflow: hidden;
+}
+
+.article-card-profile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #000, #333);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.article-card-profile:hover::before {
+    transform: scaleX(1);
+}
+
+/* Garantir estrutura consistente */
+.article-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Forçar altura consistente para todos os elementos */
+.article-card-profile > * {
+    flex-shrink: 0;
+}
+
+.article-card-content {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.article-card-footer {
+    flex-shrink: 0;
 }

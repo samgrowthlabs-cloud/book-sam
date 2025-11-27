@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarFormularios();
 });
 
-function verificarAutenticacao() {
+async function verificarAutenticacao() {
     const usuarioLogado = localStorage.getItem('usuarioLogado');
     
     if (!usuarioLogado) {
@@ -14,6 +14,12 @@ function verificarAutenticacao() {
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 2000);
+        return false;
+    }
+    
+    // VERIFICAR BANIMENTO
+    const podePublicar = await verificarBanimento();
+    if (!podePublicar) {
         return false;
     }
     
@@ -57,6 +63,11 @@ function configurarFormularios() {
     const artigoForm = document.getElementById('artigoForm');
     const livroForm = document.getElementById('livroForm');
 
+    // Verificar banimento ao carregar a página
+    setTimeout(async () => {
+        await verificarBanimento();
+    }, 500);
+
     if (artigoForm) {
         artigoForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -82,6 +93,10 @@ async function publicarArtigo() {
     const conteudoHTML = quill.root.innerHTML;
 
     console.log('Dados do artigo:', { titulo, categoria, conteudoHTML });
+
+    // VERIFICAR BANIMENTO NOVAMENTE (double check)
+    const podePublicar = await verificarBanimento();
+    if (!podePublicar) return;
 
     // Validação mais robusta
     if (!titulo) {
@@ -178,6 +193,10 @@ async function publicarLivro() {
     const link = document.getElementById('livroLink').value.trim();
 
     console.log('Dados do livro:', { titulo, genero, categoria, descricao, link });
+
+    // VERIFICAR BANIMENTO NOVAMENTE (double check)
+    const podePublicar = await verificarBanimento();
+    if (!podePublicar) return;
 
     // Validação
     if (!titulo) {
@@ -315,6 +334,96 @@ function mostrarMensagem(mensagem, tipo) {
             messageDiv.className = 'message';
         }, 5000);
     }
+}
+
+
+async function verificarBanimento() {
+    try {
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+        if (!usuarioLogado) return true; // Se não está logado, não precisa verificar banimento
+
+        const { data: usuario, error } = await window.supabase
+            .from('usuarios')
+            .select('is_banned, ban_reason, banned_until')
+            .eq('id', usuarioLogado.id)
+            .single();
+
+        if (error) {
+            console.error('Erro ao verificar banimento:', error);
+            return true; // Em caso de erro, permitir continuar
+        }
+
+        if (usuario.is_banned) {
+            let mensagem = `🚫 SUA CONTA ESTÁ BANIDA\n\nMotivo: ${usuario.ban_reason || 'Não especificado'}`;
+            
+            if (usuario.banned_until) {
+                const dataBan = new Date(usuario.banned_until);
+                if (dataBan > new Date()) {
+                    mensagem += `\nBanimento expira em: ${dataBan.toLocaleDateString('pt-BR')}`;
+                } else {
+                    // Banimento expirado - desbanir automaticamente
+                    await window.supabase
+                        .from('usuarios')
+                        .update({ 
+                            is_banned: false,
+                            ban_reason: null,
+                            banned_until: null 
+                        })
+                        .eq('id', usuarioLogado.id);
+                    return true; // Pode publicar
+                }
+            } else {
+                mensagem += '\nBanimento permanente';
+            }
+            
+            // Bloquear a publicação
+            bloquearFormularios();
+            
+            // Mostrar alerta
+            mostrarMensagem(mensagem, 'error');
+            return false; // Não pode publicar
+        }
+        
+        return true; // Pode publicar
+    } catch (error) {
+        console.error('Erro ao verificar banimento:', error);
+        return true; // Em caso de erro, permitir continuar
+    }
+}
+
+function bloquearFormularios() {
+    // Bloquear todos os botões de submit
+    document.querySelectorAll('button[type="submit"], .btn-primary').forEach(btn => {
+        btn.disabled = true;
+        btn.innerHTML = '🚫 CONTA BANIDA';
+        btn.style.background = '#e74c3c';
+        btn.style.cursor = 'not-allowed';
+    });
+    
+    // Bloquear inputs
+    document.querySelectorAll('input, select, textarea, .ql-editor').forEach(input => {
+        input.disabled = true;
+        input.style.cursor = 'not-allowed';
+        input.style.opacity = '0.6';
+    });
+    
+    // Adicionar aviso visual
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        const aviso = document.createElement('div');
+        aviso.style.cssText = `
+            background: #e74c3c;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid #c0392b;
+        `;
+        aviso.innerHTML = '🚫 CONTA BANIDA - Você não pode publicar conteúdo';
+        form.prepend(aviso);
+    });
 }
 
 // Debug: Verificar se o Supabase está configurado

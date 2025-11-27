@@ -217,19 +217,23 @@ function exibirArtigosAutor() {
     
     articlesGrid.innerHTML = artigosAutor.map(artigo => `
         <div class="article-card-profile" onclick="abrirArtigo(${artigo.id})">
-            <div class="article-card-header">
-                <span class="article-category">${formatarCategoria(artigo.categoria)}</span>
-                <span class="article-date">
-                    ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
-                </span>
+            <div class="article-card-content">
+                <div class="article-card-header">
+                    <span class="article-category">${formatarCategoria(artigo.categoria)}</span>
+                    <span class="article-date">
+                        ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                </div>
+                <h3 class="article-title-profile">${artigo.titulo}</h3>
+                <p class="article-excerpt-profile">
+                    ${artigo.descricao || 'Clique para ler o artigo completo...'}
+                </p>
             </div>
-            <h3 class="article-title-profile">${artigo.titulo}</h3>
-            <p class="article-excerpt-profile">
-                ${artigo.descricao || 'Clique para ler o artigo completo...'}
-            </p>
-            <button class="read-more-btn" onclick="event.stopPropagation(); abrirArtigo(${artigo.id})">
-                Ler Artigo →
-            </button>
+            <div class="article-card-footer">
+                <button class="read-more-btn" onclick="event.stopPropagation(); abrirArtigo(${artigo.id})">
+                    Ler Artigo →
+                </button>
+            </div>
         </div>
     `).join('');
 }

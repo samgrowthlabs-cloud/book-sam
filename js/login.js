@@ -107,3 +107,35 @@ async function fazerLogin(event) {
     messageDiv.className = 'message error';
   }
 }
+
+
+// No processo de login, após verificar credenciais
+async function verificarBanimento(usuario) {
+    if (usuario.is_banned) {
+        let mensagem = `🚫 Sua conta está banida. Motivo: ${usuario.ban_reason || 'Não especificado'}`;
+        
+        if (usuario.banned_until) {
+            const dataBan = new Date(usuario.banned_until);
+            if (dataBan > new Date()) {
+                mensagem += `\nBanimento expira em: ${dataBan.toLocaleDateString('pt-BR')}`;
+            } else {
+                // Banimento expirado - desbanir automaticamente
+                await window.supabase
+                    .from('usuarios')
+                    .update({ 
+                        is_banned: false,
+                        ban_reason: null,
+                        banned_until: null 
+                    })
+                    .eq('id', usuario.id);
+                return true; // Pode logar
+            }
+        } else {
+            mensagem += '\nBanimento permanente';
+        }
+        
+        alert(mensagem);
+        return false; // Não pode logar
+    }
+    return true; // Pode logar
+}

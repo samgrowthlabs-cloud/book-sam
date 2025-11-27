@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css"> <!-- CSS principal -->
+    <link rel="stylesheet" href="css/admin.css"> <!-- CSS do admin (caminho relativo) -->
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>👑 Painel de Administração</h1>
+            </div>
+            <div class="nav-links">
+                <a href="../index.html">← Voltar ao Site</a>
+                <button onclick="adminSystem.loadUsers()" class="btn">🔄 Atualizar</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="admin-header">
+            <h2>Gerenciamento de Usuários</h2>
+            <p>Gerencie usuários, aplique bans e administre permissões</p>
+        </div>
+
+    <!-- ADICIONE ESTA SEÇÃO DE PESQUISA -->
+    <div class="search-section">
+        <div class="search-box">
+            <input type="text" id="userSearch" placeholder="🔍 Buscar usuário por nome..." onkeyup="adminSystem.filterUsers()">
+            <button onclick="adminSystem.clearSearch()" class="btn btn-secondary">Limpar</button>
+        </div>
+        <div class="search-stats">
+            <span id="searchResults">Mostrando todos os usuários</span>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <!-- stats grid existente -->
+    </div>
+
+        <!-- No admin.html, adicione mais um card de estatística -->
+        <div class="stats-grid">
+            <div class="stat-card" onclick="adminSystem.filterByType('all')">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+            <div class="stat-card" onclick="adminSystem.filterByType('banned')">
+                <div class="stat-number" id="bannedUsers">0</div>
+                <div class="stat-label">Usuários Banidos</div>
+            </div>
+            <div class="stat-card" onclick="adminSystem.filterByType('admins')">
+                <div class="stat-number" id="adminUsers">0</div>
+                <div class="stat-label">Administradores</div>
+            </div>
+        </div>
+
+        <div class="users-container" id="usersContainer">
+            <!-- Usuários serão carregados aqui -->
+        </div>
+    </main>
+
+    <!-- Modal de Ban -->
+    <div id="banModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>🚫 Banir Usuário</h3>
+            <form id="banForm">
+                <div class="form-group">
+                    <label for="banReason">Motivo do Ban:</label>
+                    <textarea id="banReason" required placeholder="Descreva o motivo do banimento..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="banDuration">Duração:</label>
+                    <select id="banDuration" required>
+                        <option value="1">1 dia</option>
+                        <option value="7">7 dias</option>
+                        <option value="30">30 dias</option>
+                        <option value="90">90 dias</option>
+                        <option value="permanent">Permanente</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger">Confirmar Ban</button>
+                    <button type="button" class="btn btn-secondary" onclick="adminSystem.closeModal('banModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts com caminhos corretos -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script> <!-- Config principal -->
+    <script src="js/admin.js"></script> <!-- JS do admin (caminho relativo) -->
+</body>
+</html>

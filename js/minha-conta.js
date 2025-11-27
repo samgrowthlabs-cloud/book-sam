@@ -420,5 +420,5 @@ async function excluirConteudo() {
 
 function sair() {
     localStorage.removeItem('usuarioLogado');
-    window.location.href = 'index.html';
+    window.location.href = '../index.html';
 }
