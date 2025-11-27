@@ -1,30 +1,278 @@
+let quill;
+
 document.addEventListener('DOMContentLoaded', function() {
     verificarAutenticacao();
-    
-    const artigoForm = document.getElementById('artigoForm');
-    const livroForm = document.getElementById('livroForm');
-    
-    if (artigoForm) {
-        artigoForm.addEventListener('submit', publicarArtigo);
-    }
-    
-    if (livroForm) {
-        livroForm.addEventListener('submit', publicarLivro);
-    }
+    inicializarEditor();
+    configurarFormularios();
 });
 
 function verificarAutenticacao() {
     const usuarioLogado = localStorage.getItem('usuarioLogado');
-    const loginLink = document.getElementById('loginLink');
     
     if (!usuarioLogado) {
-        window.location.href = 'login.html';
-        return;
+        mostrarMensagem('Você precisa estar logado para publicar conteúdo.', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+        return false;
     }
     
-    if (loginLink) {
-        loginLink.textContent = 'Minha Conta';
-        loginLink.href = 'minha-conta.html';
+    return true;
+}
+
+function inicializarEditor() {
+    // Configuração simplificada do Quill Editor para evitar problemas
+    const toolbarOptions = [
+        ['bold', 'italic', 'underline', 'strike'],
+        ['blockquote', 'code-block'],
+        [{ 'header': 1 }, { 'header': 2 }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['link', 'image'],
+        ['clean']
+    ];
+
+    quill = new Quill('#editor-container', {
+        modules: {
+            toolbar: toolbarOptions
+        },
+        theme: 'snow',
+        placeholder: 'Digite seu artigo aqui...'
+    });
+
+    // Ajusta a altura do editor
+    setTimeout(() => {
+        ajustarAlturaEditor();
+    }, 100);
+}
+
+function ajustarAlturaEditor() {
+    const editor = document.querySelector('#editor-container .ql-editor');
+    if (editor) {
+        editor.style.minHeight = '300px';
+    }
+}
+
+function configurarFormularios() {
+    const artigoForm = document.getElementById('artigoForm');
+    const livroForm = document.getElementById('livroForm');
+
+    if (artigoForm) {
+        artigoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            publicarArtigo();
+        });
+    }
+
+    if (livroForm) {
+        livroForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            publicarLivro();
+        });
+    }
+}
+
+async function publicarArtigo() {
+    // Verificar autenticação primeiro
+    if (!verificarAutenticacao()) return;
+
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+    const titulo = document.getElementById('artigoTitulo').value.trim();
+    const categoria = document.getElementById('artigoCategoria').value;
+    const conteudoHTML = quill.root.innerHTML;
+
+    console.log('Dados do artigo:', { titulo, categoria, conteudoHTML });
+
+    // Validação mais robusta
+    if (!titulo) {
+        mostrarMensagem('Por favor, digite um título para o artigo.', 'error');
+        return;
+    }
+
+    if (!categoria) {
+        mostrarMensagem('Por favor, selecione uma categoria.', 'error');
+        return;
+    }
+
+    if (!conteudoHTML || conteudoHTML === '<p><br></p>' || conteudoHTML === '<p></p>') {
+        mostrarMensagem('Por favor, digite o conteúdo do artigo.', 'error');
+        return;
+    }
+
+    // Mostrar loading
+    const submitBtn = document.querySelector('#artigoForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Publicando...';
+    submitBtn.disabled = true;
+
+    try {
+        // Preparar dados para inserção - SEM autor_nome
+        const artigoData = {
+            titulo: titulo,
+            categoria: categoria,
+            conteudo: conteudoHTML,
+            autor_id: usuarioLogado.id,
+            created_at: new Date().toISOString()
+        };
+
+        console.log('Enviando dados para o Supabase:', artigoData);
+
+        // Chamada SIMPLIFICADA - sem .select()
+        const { data, error } = await window.supabase
+            .from('artigos')
+            .insert([artigoData]);
+
+        if (error) {
+            console.error('Erro do Supabase:', error);
+            throw error;
+        }
+
+        console.log('Artigo publicado com sucesso:', data);
+        mostrarMensagem('Artigo publicado com sucesso!', 'success');
+        
+        // Limpar formulário
+        document.getElementById('artigoForm').reset();
+        quill.root.innerHTML = '<p><br></p>';
+        
+        // Redirecionar após 2 segundos
+        setTimeout(() => {
+            window.location.href = 'minha-conta.html';
+        }, 2000);
+
+    } catch (error) {
+        console.error('Erro completo ao publicar artigo:', error);
+        
+        let mensagemErro = 'Erro ao publicar artigo. ';
+        
+        if (error.message) {
+            if (error.message.includes('row-level security')) {
+                mensagemErro += 'Problema de permissões no banco de dados.';
+            } else if (error.message.includes('JWT')) {
+                mensagemErro += 'Problema de autenticação. Faça login novamente.';
+            } else if (error.message.includes('foreign key')) {
+                mensagemErro += 'Problema com o usuário. Faça login novamente.';
+            } else {
+                mensagemErro += error.message;
+            }
+        } else {
+            mensagemErro += 'Tente novamente.';
+        }
+        
+        mostrarMensagem(mensagemErro, 'error');
+    } finally {
+        // Restaurar botão
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function publicarLivro() {
+    // Verificar autenticação primeiro
+    if (!verificarAutenticacao()) return;
+
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+    const titulo = document.getElementById('livroTitulo').value.trim();
+    const genero = document.getElementById('livroGenero').value;
+    const categoria = document.getElementById('livroCategoria').value;
+    const descricao = document.getElementById('livroDescricao').value.trim();
+    const link = document.getElementById('livroLink').value.trim();
+
+    console.log('Dados do livro:', { titulo, genero, categoria, descricao, link });
+
+    // Validação
+    if (!titulo) {
+        mostrarMensagem('Por favor, digite um título para o livro.', 'error');
+        return;
+    }
+
+    if (!genero) {
+        mostrarMensagem('Por favor, selecione um gênero.', 'error');
+        return;
+    }
+
+    if (!categoria) {
+        mostrarMensagem('Por favor, selecione uma categoria.', 'error');
+        return;
+    }
+
+    if (!link) {
+        mostrarMensagem('Por favor, informe o link do PDF.', 'error');
+        return;
+    }
+
+    // Validar URL
+    try {
+        new URL(link);
+    } catch (e) {
+        mostrarMensagem('Por favor, informe uma URL válida para o PDF.', 'error');
+        return;
+    }
+
+    // Mostrar loading
+    const submitBtn = document.querySelector('#livroForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Publicando...';
+    submitBtn.disabled = true;
+
+    try {
+        // Preparar dados para inserção - SEM autor_nome
+        const livroData = {
+            titulo: titulo,
+            genero: genero,
+            categoria: categoria,
+            descricao: descricao || null,
+            link_pdf: link,
+            autor_id: usuarioLogado.id,
+            created_at: new Date().toISOString()
+        };
+
+        console.log('Enviando dados do livro para o Supabase:', livroData);
+
+        // Chamada SIMPLIFICADA - sem .select()
+        const { data, error } = await window.supabase
+            .from('livros')
+            .insert([livroData]);
+
+        if (error) {
+            console.error('Erro do Supabase:', error);
+            throw error;
+        }
+
+        console.log('Livro publicado com sucesso:', data);
+        mostrarMensagem('Livro publicado com sucesso!', 'success');
+        
+        // Limpar formulário
+        document.getElementById('livroForm').reset();
+        
+        // Redirecionar após 2 segundos
+        setTimeout(() => {
+            window.location.href = 'minha-conta.html';
+        }, 2000);
+
+    } catch (error) {
+        console.error('Erro completo ao publicar livro:', error);
+        
+        let mensagemErro = 'Erro ao publicar livro. ';
+        
+        if (error.message) {
+            if (error.message.includes('row-level security')) {
+                mensagemErro += 'Problema de permissões no banco de dados.';
+            } else if (error.message.includes('JWT')) {
+                mensagemErro += 'Problema de autenticação. Faça login novamente.';
+            } else if (error.message.includes('foreign key')) {
+                mensagemErro += 'Problema com o usuário. Faça login novamente.';
+            } else {
+                mensagemErro += error.message;
+            }
+        } else {
+            mensagemErro += 'Tente novamente.';
+        }
+        
+        mostrarMensagem(mensagemErro, 'error');
+    } finally {
+        // Restaurar botão
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -39,128 +287,35 @@ function abrirTab(tabName) {
     });
     
     // Mostrar tab selecionada
-    const tabElement = document.getElementById(`form-${tabName}`);
-    if (tabElement) {
-        tabElement.classList.add('active');
-    }
-    
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+    document.getElementById(`form-${tabName}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    // Se for a tab de artigo, ajustar o editor
+    if (tabName === 'artigo' && quill) {
+        setTimeout(() => {
+            ajustarAlturaEditor();
+        }, 100);
     }
 }
 
-async function publicarArtigo(event) {
-    event.preventDefault();
-    
-    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+function mostrarMensagem(mensagem, tipo) {
     const messageDiv = document.getElementById('publishMessage');
-    
-    // Verificar se os elementos existem antes de acessá-los
-    const tituloInput = document.getElementById('artigoTitulo');
-    const categoriaInput = document.getElementById('artigoCategoria');
-    const conteudoInput = document.getElementById('artigoConteudo');
-    
-    if (!tituloInput || !categoriaInput || !conteudoInput) {
-        console.error('Elementos do formulário de artigo não encontrados');
-        if (messageDiv) {
-            messageDiv.textContent = 'Erro: Formulário incompleto';
-            messageDiv.className = 'message error';
-        }
+    if (!messageDiv) {
+        console.error('Elemento publishMessage não encontrado');
         return;
     }
     
-    const artigo = {
-        titulo: tituloInput.value,
-        categoria: categoriaInput.value,
-        conteudo: conteudoInput.value,
-        autor_id: usuarioLogado.id
-    };
+    messageDiv.textContent = mensagem;
+    messageDiv.className = `message ${tipo}`;
     
-    try {
-        const { data, error } = await window.supabase
-            .from('artigos')
-            .insert([artigo]);
-
-        if (error) throw error;
-
-        if (messageDiv) {
-            messageDiv.textContent = 'Artigo publicado com sucesso!';
-            messageDiv.className = 'message success';
-        }
-        
-        // Limpar formulário
-        document.getElementById('artigoForm').reset();
-        
-        // Redirecionar para artigos após 2 segundos
+    // Auto-esconder após 5 segundos para sucesso, manter erro visível
+    if (tipo === 'success') {
         setTimeout(() => {
-            window.location.href = 'artigos.html';
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Erro ao publicar artigo:', error);
-        if (messageDiv) {
-            messageDiv.textContent = 'Erro ao publicar artigo: ' + error.message;
-            messageDiv.className = 'message error';
-        }
+            messageDiv.textContent = '';
+            messageDiv.className = 'message';
+        }, 5000);
     }
 }
 
-async function publicarLivro(event) {
-    event.preventDefault();
-    
-    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
-    const messageDiv = document.getElementById('publishMessage');
-    
-    // Verificar se os elementos existem antes de acessá-los
-    const tituloInput = document.getElementById('livroTitulo');
-    const generoInput = document.getElementById('livroGenero');
-    const categoriaInput = document.getElementById('livroCategoria');
-    const descricaoInput = document.getElementById('livroDescricao');
-    const linkInput = document.getElementById('livroLink');
-    
-    if (!tituloInput || !generoInput || !categoriaInput || !linkInput) {
-        console.error('Elementos do formulário de livro não encontrados');
-        if (messageDiv) {
-            messageDiv.textContent = 'Erro: Formulário incompleto';
-            messageDiv.className = 'message error';
-        }
-        return;
-    }
-    
-    const livro = {
-        titulo: tituloInput.value,
-        genero: generoInput.value,
-        categoria: categoriaInput.value,
-        descricao: descricaoInput ? descricaoInput.value : '',
-        link_pdf: linkInput.value,
-        autor_id: usuarioLogado.id
-    };
-    
-    try {
-        const { data, error } = await window.supabase
-            .from('livros')
-            .insert([livro]);
-
-        if (error) throw error;
-
-        if (messageDiv) {
-            messageDiv.textContent = 'Livro publicado com sucesso!';
-            messageDiv.className = 'message success';
-        }
-        
-        // Limpar formulário
-        document.getElementById('livroForm').reset();
-        
-        // Redirecionar para livros após 2 segundos
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Erro ao publicar livro:', error);
-        if (messageDiv) {
-            messageDiv.textContent = 'Erro ao publicar livro: ' + error.message;
-            messageDiv.className = 'message error';
-        }
-    }
-}
+// Debug: Verificar se o Supabase está configurado
+console.log('Supabase configurado:', !!window.supabase);

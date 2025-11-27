@@ -1,28 +1,27 @@
-// header.js - Header fixo para TODAS as páginas
+// header.js - Header fixo para TODAS as páginas (VERSÃO CORRIGIDA)
 class GlobalHeader {
     constructor() {
         this.init();
     }
 
     init() {
+        // Verificar se já existe um header para evitar duplicação
+        if (document.querySelector('.navbar')) {
+            console.log('Header já existe, ignorando injeção');
+            this.setupExistingHeader();
+            return;
+        }
+
         this.injectHeader();
         this.setupMobileMenu();
         this.setActiveLink();
         this.adjustBodyPadding();
-        this.setupModalFunctionality();
         this.setupEventListeners();
     }
 
     injectHeader() {
-        // Remove qualquer header existente para evitar duplicação
-        const existingHeader = document.querySelector('header');
-        if (existingHeader) {
-            existingHeader.remove();
-        }
-
         const currentPath = window.location.pathname;
         const isIndexPage = currentPath.includes('index.html') || currentPath.endsWith('/') || currentPath === '';
-        const isInPagesFolder = currentPath.includes('/pages/');
         
         const headerHTML = `
             <header>
@@ -46,8 +45,17 @@ class GlobalHeader {
             </header>
         `;
         
+        // Insere o header no início do body, mas preserva o conteúdo existente
         document.body.insertAdjacentHTML('afterbegin', headerHTML);
         console.log('Header injetado com sucesso!');
+    }
+
+    setupExistingHeader() {
+        // Configura um header que já existe na página
+        this.setupMobileMenu();
+        this.setActiveLink();
+        this.adjustBodyPadding();
+        this.setupEventListeners();
     }
 
     getCurrentPage() {
@@ -58,6 +66,7 @@ class GlobalHeader {
         if (path.includes('publicar.html')) return 'publicar';
         if (path.includes('minha-conta.html')) return 'minha-conta';
         if (path.includes('login.html')) return 'login';
+        if (path.includes('artigo-completo.html')) return 'artigos'; // Artigo completo pertence à seção de artigos
         return 'index';
     }
 
@@ -86,9 +95,6 @@ class GlobalHeader {
             const menuToggle = document.querySelector('.menu-toggle');
             const navLinks = document.querySelector('.nav-links');
 
-            console.log('Menu toggle:', menuToggle);
-            console.log('Nav links:', navLinks);
-
             if (menuToggle && navLinks) {
                 menuToggle.addEventListener('click', function() {
                     this.classList.toggle('active');
@@ -114,60 +120,13 @@ class GlobalHeader {
             if (navbar) {
                 const headerHeight = navbar.offsetHeight;
                 document.body.style.paddingTop = headerHeight + 'px';
-                console.log('Padding ajustado para:', headerHeight + 'px');
             }
         };
 
         setTimeout(updatePadding, 50);
         setTimeout(updatePadding, 200);
-        setTimeout(updatePadding, 500);
-        
         window.addEventListener('load', updatePadding);
         window.addEventListener('resize', updatePadding);
-    }
-
-    setupModalFunctionality() {
-        // Esta função será chamada quando o modal for necessário
-        setTimeout(() => {
-            const modal = document.getElementById('pdfModal');
-            const closeBtn = document.querySelector('.close');
-
-            if (modal && closeBtn) {
-                console.log('Modal encontrado, configurando...');
-
-                window.openPdf = function(pdfUrl) {
-                    const pdfViewer = document.getElementById('pdfViewer');
-                    if (pdfViewer) {
-                        pdfViewer.src = pdfUrl;
-                        modal.style.display = 'block';
-                        document.body.style.overflow = 'hidden';
-                    }
-                };
-
-                window.closeModal = function() {
-                    modal.style.display = 'none';
-                    document.body.style.overflow = 'auto';
-                    const pdfViewer = document.getElementById('pdfViewer');
-                    if (pdfViewer) {
-                        pdfViewer.src = '';
-                    }
-                };
-
-                closeBtn.addEventListener('click', window.closeModal);
-
-                window.addEventListener('click', function(event) {
-                    if (event.target === modal) {
-                        window.closeModal();
-                    }
-                });
-
-                document.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape') {
-                        window.closeModal();
-                    }
-                });
-            }
-        }, 200);
     }
 
     setupEventListeners() {
@@ -184,26 +143,29 @@ class GlobalHeader {
     }
 }
 
-// INICIALIZAÇÃO IMEDIATA
-console.log('Inicializando header global...');
-new GlobalHeader();
-
-// Também inicializa quando o DOM estiver pronto como backup
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM carregado, verificando header...');
-    if (!document.querySelector('.navbar')) {
-        console.log('Header não encontrado, reinjetando...');
+// INICIALIZAÇÃO MODIFICADA - Aguarda o conteúdo carregar primeiro
+function initializeHeader() {
+    // Aguarda um pouco mais para garantir que o conteúdo da página esteja carregado
+    setTimeout(() => {
+        console.log('Inicializando header global...');
         new GlobalHeader();
-    }
-});
+    }, 300);
+}
 
-// Força uma nova inicialização após o load completo
+// Inicializa quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeHeader);
+} else {
+    initializeHeader();
+}
+
+// Backup: também inicializa após o load completo
 window.addEventListener('load', () => {
-    console.log('Página totalmente carregada, verificando header final...');
+    console.log('Página carregada - verificando header...');
     setTimeout(() => {
         const navbar = document.querySelector('.navbar');
         if (!navbar) {
-            console.log('Header ainda não encontrado, tentando novamente...');
+            console.log('Header não encontrado, tentando novamente...');
             new GlobalHeader();
         }
     }, 1000);

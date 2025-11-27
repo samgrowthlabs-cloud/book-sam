@@ -9,23 +9,26 @@
     <link rel="stylesheet" href="../css/comentarios.css">
 </head>
 <body>
+    <!-- Header será injetado automaticamente -->
 
-    <main class="article-container">
-        <article class="article-full">
-            <header class="article-header-full">
+    <main class="article-container" id="mainArticleContainer">
+        <article class="article-full" id="fullArticle">
+            <header class="article-header-full" id="articleHeaderFull">
                 <div class="article-meta-full">
-                    <span class="article-categoria-full" id="articleCategoria"></span>
-                    <span class="article-data-full" id="articleData"></span>
+                    <span class="article-categoria-full" id="articleCategoriaFull">Carregando...</span>
+                    <span class="article-data-full" id="articleDataFull">Carregando...</span>
                 </div>
-                <h1 class="article-title-full" id="articleTitle"></h1>
-                <div class="article-author-full" id="articleAuthor"></div>
+                <h1 class="article-title-full" id="articleTitleFull">Carregando artigo...</h1>
+                <div class="article-author-full" id="articleAuthorFull">Carregando autor...</div>
             </header>
 
-            <div class="article-content-full" id="articleContent">
-                <!-- Conteúdo do artigo será inserido aqui -->
+            <div class="article-content-full" id="articleContentFull">
+                <div class="loading-content">
+                    <p>Carregando conteúdo do artigo...</p>
+                </div>
             </div>
 
-            <footer class="article-footer">
+            <footer class="article-footer" id="articleFooterFull">
                 <div class="article-actions">
                     <button class="action-btn" onclick="window.print()">
                         📄 Imprimir
@@ -40,40 +43,38 @@
             </footer>
         </article>
 
-                <!-- Seção de Comentários -->
-                <section class="comments-section">
-                    <div class="comments-header">
-                        <h3>💬 Comentários</h3>
-                        <span class="comments-count" id="commentsCount">0 comentários</span>
-                    </div>
+        <!-- Seção de Comentários -->
+        <section class="comments-section" id="commentsSectionFull">
+            <div class="comments-header">
+                <h3>💬 Comentários</h3>
+                <span class="comments-count" id="commentsCountFull">0 comentários</span>
+            </div>
 
-                    <!-- Formulário de Comentário -->
-                    <form class="comment-form" id="commentForm">
-                        <textarea 
-                            id="commentText" 
-                            placeholder="Digite seu comentário aqui..."
-                            required
-                        ></textarea>
-                        <div class="comment-form-actions">
-                            <button type="submit" class="btn-comment">📤 Publicar Comentário</button>
-                        </div>
-                    </form>
+            <!-- Formulário de Comentário -->
+            <form class="comment-form" id="commentFormFull">
+                <textarea 
+                    id="commentTextFull" 
+                    placeholder="Digite seu comentário aqui..."
+                    required
+                ></textarea>
+                <div class="comment-form-actions">
+                    <button type="submit" class="btn-comment">📤 Publicar Comentário</button>
+                </div>
+            </form>
 
-                    <!-- Lista de Comentários -->
-                    <div class="comments-list" id="commentsContainer">
-                        <div class="comment-loading">
-                            <p>Carregando comentários...</p>
-                        </div>
-                    </div>
-                </section>
-            </main>
+            <!-- Lista de Comentários -->
+            <div class="comments-list" id="commentsContainerFull">
+                <div class="comment-loading">
+                    <p>Carregando comentários...</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/artigo-completo.js"></script>
     <script src="../js/comentarios.js"></script>
     <script src="../js/header.js"></script>
-
-    
 </body>
 </html>

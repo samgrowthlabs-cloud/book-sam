@@ -1,36 +1,87 @@
+// artigo-completo.js - VERSÃO CORRIGIDA
 document.addEventListener('DOMContentLoaded', function() {
-    carregarArtigoCompleto();
-    verificarLogin();
+    console.log('DOM carregado - inicializando artigo completo');
+    // Aguarda um pouco mais para o header carregar
+    setTimeout(() => {
+        carregarArtigoCompleto();
+    }, 500);
 });
-
 async function carregarArtigoCompleto() {
+    console.log('Iniciando carregamento do artigo...');
+    
     const artigoData = localStorage.getItem('artigoCompleto');
     
     if (!artigoData) {
-        document.body.innerHTML = `
-            <div class="navbar">
-                <div class="nav-brand">
-                    <h1>📚 Enciclopédia Financeira</h1>
-                </div>
-            </div>
-            <div class="container">
-                <div class="error-message">
-                    <h2>Artigo não encontrado</h2>
-                    <p>O artigo solicitado não está disponível.</p>
-                    <button onclick="voltarParaArtigos()" class="btn">Voltar para Artigos</button>
-                </div>
-            </div>
-        `;
+        console.error('Nenhum artigo encontrado no localStorage');
+        mostrarErroArtigo();
         return;
     }
     
-    const artigo = JSON.parse(artigoData);
-    exibirArtigoCompleto(artigo);
+    try {
+        const artigo = JSON.parse(artigoData);
+        console.log('Artigo parseado:', artigo);
+        await exibirArtigoCompleto(artigo);
+    } catch (error) {
+        console.error('Erro ao parsear artigo:', error);
+        mostrarErroArtigo();
+    }
+}
+
+function mostrarErroArtigo() {
+    const mainContainer = document.getElementById('mainArticleContainer');
+    if (mainContainer) {
+        mainContainer.innerHTML = `
+            <div class="error-message" style="text-align: center; padding: 4rem;">
+                <h2>Artigo não encontrado</h2>
+                <p>O artigo solicitado não está disponível ou ocorreu um erro ao carregar.</p>
+                <button onclick="voltarParaArtigos()" class="btn" style="margin-top: 1rem;">
+                    ← Voltar para Artigos
+                </button>
+            </div>
+        `;
+    }
 }
 
 async function exibirArtigoCompleto(artigo) {
+    console.log('Exibindo artigo completo:', artigo);
+    
+    // Aguardar um pouco para garantir que o DOM esteja pronto
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Buscar elementos com IDs específicos
+    const elements = {
+        title: document.getElementById('articleTitleFull'),
+        category: document.getElementById('articleCategoriaFull'),
+        date: document.getElementById('articleDataFull'),
+        author: document.getElementById('articleAuthorFull'),
+        content: document.getElementById('articleContentFull')
+    };
+    
+    console.log('Elementos encontrados:', elements);
+    
+    // Verificar se todos os elementos existem
+    for (const [key, element] of Object.entries(elements)) {
+        if (!element) {
+            console.error(`Elemento não encontrado: ${key}`);
+            console.log('Tentando buscar elementos alternativos...');
+            
+            // Tentar buscar elementos com IDs antigos como fallback
+            const fallbackId = key === 'title' ? 'articleTitle' : 
+                              key === 'category' ? 'articleCategoria' :
+                              key === 'date' ? 'articleData' :
+                              key === 'author' ? 'articleAuthor' :
+                              key === 'content' ? 'articleContent' : key;
+            
+            elements[key] = document.getElementById(fallbackId);
+            if (!elements[key]) {
+                console.error(`Elemento fallback também não encontrado: ${fallbackId}`);
+                return;
+            }
+        }
+    }
+    
     // Buscar informações do autor
-    let autor = 'Anônimo';
+    let autorNome = 'Anônimo';
     try {
         const { data: usuario, error } = await window.supabase
             .from('usuarios')
@@ -39,35 +90,48 @@ async function exibirArtigoCompleto(artigo) {
             .single();
             
         if (!error && usuario) {
-            autor = usuario.usuario;
+            autorNome = usuario.usuario;
         }
     } catch (error) {
         console.error('Erro ao buscar autor:', error);
     }
     
     // Atualizar elementos da página
-    document.getElementById('articleTitle').textContent = artigo.titulo;
-    document.getElementById('articleCategoria').textContent = formatarCategoria(artigo.categoria);
-    document.getElementById('articleData').textContent = new Date(artigo.created_at).toLocaleDateString('pt-BR', {
+    elements.title.textContent = artigo.titulo || 'Artigo sem título';
+    elements.category.textContent = formatarCategoria(artigo.categoria) || 'Sem categoria';
+    elements.date.textContent = new Date(artigo.created_at).toLocaleDateString('pt-BR', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-    });
-    document.getElementById('articleAuthor').textContent = `Por: ${autor}`;
+    }) || 'Data desconhecida';
+    elements.author.textContent = `Por: ${autorNome}`;
     
-    // Formatar e exibir conteúdo
-    const conteudoFormatado = formatarConteudo(artigo.conteudo);
-    document.getElementById('articleContent').innerHTML = conteudoFormatado;
+    // Exibir conteúdo HTML diretamente
+    if (artigo.conteudo) {
+        elements.content.innerHTML = artigo.conteudo;
+        console.log('Conteúdo inserido no elemento com sucesso!');
+    } else {
+        elements.content.innerHTML = '<p>Conteúdo não disponível.</p>';
+    }
     
     // Atualizar título da página
     document.title = `${artigo.titulo} - Enciclopédia Financeira`;
-    // Inicializar sistema de comentários para artigos
-    console.log('Inicializando comentários para artigo:', artigo.id);
-    comentariosManager = new ComentariosManager('artigo', artigo.id);
-    comentariosManager.init();
+    
+    // Inicializar controles de zoom
+    setTimeout(() => {
+        try {
+            inicializarControlesZoom();
+            atualizarZoom();
+            console.log('Controles de zoom inicializados');
+        } catch (error) {
+            console.error('Erro ao inicializar controles de zoom:', error);
+        }
+    }, 1000);
 }
 
 function formatarCategoria(categoria) {
+    if (!categoria) return 'Sem categoria';
+    
     const categorias = {
         'investimentos': 'Investimentos',
         'economia': 'Economia',
@@ -80,90 +144,117 @@ function formatarCategoria(categoria) {
     return categorias[categoria] || categoria;
 }
 
-function formatarConteudo(conteudo) {
-    // Processar blocos de código primeiro
-    let formatado = conteudo.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+// Controles de Zoom
+let currentZoom = 100;
+
+function inicializarControlesZoom() {
+    // Verificar se já existe controles de zoom
+    if (document.querySelector('.zoom-controls')) {
+        return;
+    }
+
+    try {
+        // Criar controles de zoom
+        const zoomControls = document.createElement('div');
+        zoomControls.className = 'zoom-controls';
+        zoomControls.innerHTML = `
+            <button class="zoom-btn" onclick="aplicarZoom(-10)">🔍−</button>
+            <span class="zoom-level">${currentZoom}%</span>
+            <button class="zoom-btn" onclick="aplicarZoom(10)">🔍＋</button>
+            <button class="zoom-btn" onclick="resetarZoom()">↺</button>
+            <button class="zoom-btn" onclick="toggleModoLeitura()">📖</button>
+        `;
+        
+        document.body.appendChild(zoomControls);
+        console.log('Controles de zoom criados com sucesso');
+    } catch (error) {
+        console.error('Erro ao criar controles de zoom:', error);
+    }
+}
+
+function aplicarZoom(incremento) {
+    const novoZoom = currentZoom + incremento;
     
-    // Processar fórmulas matemáticas entre $$
-    formatado = formatado.replace(/\$\$(.+?)\$\$/g, '<div class="formula">$1</div>');
+    // Limites do zoom
+    if (novoZoom >= 80 && novoZoom <= 200) {
+        currentZoom = novoZoom;
+        atualizarZoom();
+    }
+}
+
+function resetarZoom() {
+    currentZoom = 100;
+    atualizarZoom();
+}
+
+function atualizarZoom() {
+    const content = document.getElementById('articleContent');
+    const zoomLevel = document.querySelector('.zoom-level');
     
-    // Processar fórmulas matemáticas inline entre $
-    formatado = formatado.replace(/\$(.+?)\$/g, '<span class="math">$1</span>');
-    
-    // Processar blocos de teorema
-    formatado = formatado.replace(/:::theorem\s+([^:]+):::/g, '<div class="theorem"><div class="theorem-title">$1</div>');
-    formatado = formatado.replace(/:::end-theorem:::/g, '</div>');
-    
-    // Processar blocos de nota
-    formatado = formatado.replace(/:::note\s+([^:]+):::/g, '<div class="note"><strong>Nota:</strong> $1');
-    formatado = formatado.replace(/:::end-note:::/g, '</div>');
-    
-    // Processar títulos
-    formatado = formatado.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-    formatado = formatado.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    formatado = formatado.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    formatado = formatado.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-    formatado = formatado.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
-    formatado = formatado.replace(/^###### (.+)$/gm, '<h6>$1</h6>');
-    
-    // Processar citações
-    formatado = formatado.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-    
-    // Processar listas não ordenadas
-    formatado = formatado.replace(/^- (.+)$/gm, '<ul><li>$1</li></ul>');
-    formatado = formatado.replace(/<\/ul>\s*<ul>/g, '');
-    
-    // Processar listas ordenadas
-    formatado = formatado.replace(/^\d+\. (.+)$/gm, '<ol><li>$1</li></ol>');
-    formatado = formatado.replace(/<\/ol>\s*<ol>/g, '');
-    
-    // Processar negrito
-    formatado = formatado.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    formatado = formatado.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    
-    // Processar itálico
-    formatado = formatado.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    formatado = formatado.replace(/_([^_]+)_/g, '<em>$1</em>');
-    
-    // Processar código inline
-    formatado = formatado.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
-    // Processar links
-    formatado = formatado.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    
-    // Processar imagens
-    formatado = formatado.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-    
-    // Processar quebras de linha em parágrafos
-    formatado = formatado.replace(/\n\n/g, '</p><p>');
-    formatado = formatado.replace(/\n/g, '<br>');
-    
-    // Adicionar parágrafos principais
-    formatado = '<p>' + formatado + '</p>';
-    
-    // Limpar parágrafos vazios
-    formatado = formatado.replace(/<p><\/p>/g, '');
-    formatado = formatado.replace(/<p><\/(ul|ol|h1|h2|h3|h4|h5|h6|blockquote|pre|div)>/g, '</$1>');
-    formatado = formatado.replace(/<(ul|ol|h1|h2|h3|h4|h5|h6|blockquote|pre|div)><\/p>/g, '<$1>');
-    
-    return formatado;
+    if (content && zoomLevel) {
+        // Aplica zoom diretamente no estilo
+        content.style.fontSize = `${currentZoom}%`;
+        content.style.lineHeight = `${1.6 + (currentZoom - 100) * 0.005}`;
+        
+        zoomLevel.textContent = `${currentZoom}%`;
+        console.log('Zoom atualizado para:', currentZoom + '%');
+    }
+}
+
+function toggleModoLeitura() {
+    try {
+        const container = document.querySelector('.article-container');
+        const zoomControls = document.querySelector('.zoom-controls');
+        
+        if (container.classList.contains('reading-mode')) {
+            // Sair do modo leitura
+            container.classList.remove('reading-mode');
+            document.body.style.overflow = 'auto';
+            if (zoomControls) zoomControls.style.display = 'flex';
+            console.log('Modo leitura desativado');
+        } else {
+            // Entrar no modo leitura
+            container.classList.add('reading-mode');
+            document.body.style.overflow = 'hidden';
+            
+            // Criar controles no modo leitura
+            const readingControls = document.createElement('div');
+            readingControls.className = 'zoom-controls';
+            readingControls.innerHTML = `
+                <button class="zoom-btn" onclick="aplicarZoom(-10)">🔍−</button>
+                <span class="zoom-level">${currentZoom}%</span>
+                <button class="zoom-btn" onclick="aplicarZoom(10)">🔍＋</button>
+                <button class="zoom-btn" onclick="resetarZoom()">↺</button>
+                <button class="zoom-btn" onclick="toggleModoLeitura()">✕</button>
+            `;
+            
+            container.appendChild(readingControls);
+            console.log('Modo leitura ativado');
+        }
+    } catch (error) {
+        console.error('Erro ao alternar modo leitura:', error);
+    }
 }
 
 function compartilharArtigo() {
-    const titulo = document.getElementById('articleTitle').textContent;
-    const url = window.location.href;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: titulo,
-            text: 'Confira este artigo da Enciclopédia Financeira:',
-            url: url
-        });
-    } else {
-        // Fallback para copiar link
-        navigator.clipboard.writeText(url).then(() => {
-            alert('Link copiado para a área de transferência!');
-        });
+    try {
+        const titulo = document.getElementById('articleTitle').textContent;
+        const url = window.location.href;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: titulo,
+                text: 'Confira este artigo da Enciclopédia Financeira:',
+                url: url
+            });
+        } else {
+            // Fallback para copiar link
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copiado para a área de transferência!');
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao compartilhar artigo:', error);
     }
 }
 
@@ -171,12 +262,31 @@ function voltarParaArtigos() {
     window.location.href = 'artigos.html';
 }
 
-function verificarLogin() {
-    const usuarioLogado = localStorage.getItem('usuarioLogado');
-    const loginLink = document.getElementById('loginLink');
-    
-    if (usuarioLogado && loginLink) {
-        loginLink.textContent = 'Minha Conta';
-        loginLink.href = '#';
+// Adicione suporte a teclas de atalho
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case '=':
+            case '+':
+                e.preventDefault();
+                aplicarZoom(10);
+                break;
+            case '-':
+                e.preventDefault();
+                aplicarZoom(-10);
+                break;
+            case '0':
+                e.preventDefault();
+                resetarZoom();
+                break;
+            case 'l':
+            case 'L':
+                e.preventDefault();
+                toggleModoLeitura();
+                break;
+        }
     }
-}
+});
+
+// Debug final
+console.log('Script artigo-completo.js carregado completamente');

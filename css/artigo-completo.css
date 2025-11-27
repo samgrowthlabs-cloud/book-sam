@@ -1,150 +1,257 @@
+/* artigo-completo.css */
+:root {
+    --primary-color: #000000;
+    --secondary-color: #333333;
+    --accent-color: #666666;
+    --background-color: #ffffff;
+    --surface-color: #f8f9fa;
+    --border-color: #e0e0e0;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+    --border-radius: 12px;
+    --border-radius-lg: 20px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--background-color);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    padding-top: 80px;
+}
+
+/* Container Principal */
 .article-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 2rem;
-    background: white;
-    min-height: 100vh;
+    position: relative;
 }
 
+/* Artigo Completo */
 .article-full {
-    padding: 2rem 0;
+    background: var(--background-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 3rem;
+    position: relative;
 }
 
+/* Header do Artigo */
 .article-header-full {
-    margin-bottom: 3rem;
-    border-bottom: 1px solid #ecf0f1;
-    padding-bottom: 2rem;
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+    padding: 3rem 3rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.article-header-full::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
 }
 
 .article-meta-full {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .article-categoria-full {
-    background: #9b59b6;
+    background: var(--primary-color);
     color: white;
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    padding: 0.5rem 1.2rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .article-data-full {
-    color: #95a5a6;
+    color: var(--text-secondary);
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .article-title-full {
     font-size: 2.5rem;
+    font-weight: 800;
     line-height: 1.2;
-    color: #2c3e50;
     margin-bottom: 1rem;
-    font-weight: 700;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
 .article-author-full {
-    color: #7f8c8d;
+    color: var(--text-secondary);
     font-size: 1.1rem;
     font-weight: 500;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-color);
 }
 
-/* ESTILO PRINCIPAL DO CONTEÚDO COM CAMBRIA MATH */
+/* Conteúdo do Artigo */
 .article-content-full {
+    padding: 3rem;
     font-size: 1.125rem;
     line-height: 1.8;
-    color: #2c3e50;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    color: var(--text-primary);
+    position: relative;
 }
 
-/* Parágrafos */
-.article-content-full p {
-    margin-bottom: 1.5rem;
-    text-align: justify;
-    font-family: 'Cambria', 'Times New Roman', serif;
+/* Controles de Zoom */
+.zoom-controls {
+    position: fixed;
+    top: 100px;
+    right: 2rem;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    display: flex;
+    gap: 0.5rem;
 }
 
-/* Títulos */
+.zoom-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: var(--transition);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-btn:hover {
+    background: var(--surface-color);
+    border-color: var(--accent-color);
+}
+
+.zoom-level {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    min-width: 60px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Estilização do Conteúdo Formatado */
 .article-content-full h1 {
-    font-size: 2rem;
-    margin: 2.5rem 0 1.5rem 0;
-    color: #2c3e50;
-    border-bottom: 3px solid #3498db;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 3rem 0 1.5rem 0;
+    color: var(--text-primary);
+    line-height: 1.3;
+    border-bottom: 2px solid var(--primary-color);
     padding-bottom: 0.5rem;
-    font-family: 'Cambria', 'Times New Roman', serif;
-    font-weight: 700;
 }
 
 .article-content-full h2 {
-    font-size: 1.7rem;
-    margin: 2.2rem 0 1.2rem 0;
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.4rem;
-    font-family: 'Cambria', 'Times New Roman', serif;
-    font-weight: 600;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1.25rem 0;
+    color: var(--text-primary);
+    line-height: 1.4;
 }
 
 .article-content-full h3 {
-    font-size: 1.4rem;
-    margin: 2rem 0 1rem 0;
-    color: #34495e;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    font-size: 1.5rem;
     font-weight: 600;
+    margin: 2rem 0 1rem 0;
+    color: var(--text-primary);
+    line-height: 1.4;
 }
 
 .article-content-full h4 {
-    font-size: 1.2rem;
-    margin: 1.8rem 0 0.8rem 0;
-    color: #34495e;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    font-size: 1.3rem;
     font-weight: 600;
+    margin: 1.5rem 0 1rem 0;
+    color: var(--secondary-color);
 }
 
-.article-content-full h5 {
-    font-size: 1.1rem;
-    margin: 1.6rem 0 0.6rem 0;
-    color: #34495e;
-    font-family: 'Cambria', 'Times New Roman', serif;
-    font-weight: 600;
-}
-
+.article-content-full h5, 
 .article-content-full h6 {
-    font-size: 1rem;
-    margin: 1.4rem 0 0.4rem 0;
-    color: #34495e;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    font-size: 1.1rem;
     font-weight: 600;
+    margin: 1.25rem 0 0.75rem 0;
+    color: var(--secondary-color);
 }
 
-/* Citações */
-.article-content-full blockquote {
-    border-left: 4px solid #3498db;
-    padding-left: 1.5rem;
-    margin: 2rem 0;
+.article-content-full p {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.article-content-full strong {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.article-content-full em {
     font-style: italic;
-    color: #7f8c8d;
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 0 5px 5px 0;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    color: var(--text-primary);
 }
 
-/* Listas */
-.article-content-full ul, .article-content-full ol {
+.article-content-full blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+    background: var(--surface-color);
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    font-style: italic;
+    color: var(--text-secondary);
+    position: relative;
+}
+
+.article-content-full blockquote::before {
+    content: '"';
+    font-size: 3rem;
+    color: var(--primary-color);
+    position: absolute;
+    left: 1rem;
+    top: 0.5rem;
+    opacity: 0.3;
+}
+
+.article-content-full ul, 
+.article-content-full ol {
     margin: 1.5rem 0;
     padding-left: 2rem;
-    font-family: 'Cambria', 'Times New Roman', serif;
 }
 
 .article-content-full li {
     margin-bottom: 0.5rem;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    padding-left: 0.5rem;
 }
 
 .article-content-full ul li {
@@ -155,169 +262,236 @@
     list-style-type: decimal;
 }
 
-/* Ênfase */
-.article-content-full strong {
-    color: #2c3e50;
-    font-weight: 700;
-    font-family: 'Cambria Math', 'Cambria', serif;
-}
-
-.article-content-full em {
-    color: #7f8c8d;
-    font-style: italic;
-    font-family: 'Cambria', 'Times New Roman', serif;
-}
-
-/* Links */
-.article-content-full a {
-    color: #3498db;
-    text-decoration: none;
-    border-bottom: 1px solid #3498db;
-    font-family: 'Cambria', 'Times New Roman', serif;
-}
-
-.article-content-full a:hover {
-    color: #2980b9;
-    border-bottom-color: #2980b9;
-}
-
-/* Código inline */
 .article-content-full code {
-    background: #f8f9fa;
+    background: var(--surface-color);
     padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-family: 'Cambria Math', 'Courier New', monospace;
-    color: #e74c3c;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Courier New', monospace;
     font-size: 0.9em;
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
 }
 
-/* Blocos de código */
 .article-content-full pre {
-    background: #2c3e50;
-    color: #ecf0f1;
+    background: #1a1a1a;
+    color: #f8f9fa;
     padding: 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     overflow-x: auto;
-    margin: 1.5rem 0;
-    font-family: 'Cambria Math', 'Courier New', monospace;
-    font-size: 0.9em;
+    margin: 2rem 0;
+    border: 1px solid #333;
+    position: relative;
 }
 
 .article-content-full pre code {
     background: none;
-    color: inherit;
     padding: 0;
-    font-family: inherit;
+    border: none;
+    color: inherit;
+    font-size: 0.95em;
+    line-height: 1.5;
 }
 
-/* Tabelas */
-.article-content-full table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-    font-family: 'Cambria', 'Times New Roman', serif;
+.article-content-full pre::before {
+    content: '📋';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
 }
 
-.article-content-full th, .article-content-full td {
-    border: 1px solid #bdc3c7;
-    padding: 0.75rem;
-    text-align: left;
+.article-content-full pre:hover::before {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-.article-content-full th {
-    background: #3498db;
-    color: white;
-    font-weight: 600;
+.article-content-full a {
+    color: var(--primary-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: var(--transition);
+    font-weight: 500;
 }
 
-.article-content-full tr:nth-child(even) {
-    background: #f8f9fa;
+.article-content-full a:hover {
+    border-bottom-color: var(--primary-color);
 }
 
-/* Imagens */
 .article-content-full img {
     max-width: 100%;
     height: auto;
-    border-radius: 5px;
-    margin: 1.5rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius);
+    margin: 2rem auto;
+    display: block;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
 }
 
-/* Matemática e fórmulas (estilo Cambria Math) */
-.article-content-full .math {
-    font-family: 'Cambria Math', 'Cambria', serif;
-    font-style: italic;
-}
-
+/* Elementos Especiais */
 .article-content-full .formula {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
     text-align: center;
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 5px;
-    font-family: 'Cambria Math', 'Cambria', serif;
-    font-size: 1.1em;
+    font-family: 'Times New Roman', serif;
+    font-size: 1.2em;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--primary-color);
 }
 
-/* Citações matemáticas */
+.article-content-full .math {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    background: var(--surface-color);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+}
+
 .article-content-full .theorem {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #e8f4f8;
-    border-left: 4px solid #3498db;
-    border-radius: 0 5px 5px 0;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
+    border: 1px solid var(--border-color);
+    border-left: 6px solid var(--primary-color);
 }
 
-.article-content-full .theorem .theorem-title {
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-family: 'Cambria', 'Times New Roman', serif;
+.article-content-full .theorem-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.1em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Notas e observações */
 .article-content-full .note {
-    margin: 1rem 0;
-    padding: 1rem;
     background: #fff3cd;
-    border-left: 4px solid #ffc107;
-    border-radius: 0 5px 5px 0;
-    font-family: 'Cambria', 'Times New Roman', serif;
+    border: 1px solid #ffeaa7;
+    border-left: 4px solid #fdcb6e;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1.5rem 0;
+    color: #856404;
 }
 
+/* Footer do Artigo */
 .article-footer {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid #ecf0f1;
+    background: var(--surface-color);
+    padding: 2rem 3rem;
+    border-top: 1px solid var(--border-color);
 }
 
 .article-actions {
     display: flex;
     gap: 1rem;
+    justify-content: center;
     flex-wrap: wrap;
 }
 
 .action-btn {
-    background: #3498db;
-    color: white;
-    border: none;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
     padding: 0.75rem 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .action-btn:hover {
-    background: #2980b9;
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
 }
 
-/* Responsivo */
+/* Seção de Comentários */
+.comments-section {
+    background: var(--background-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.comments-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comments-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.comments-count {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Estados de Zoom */
+.article-content-full.zoom-90 { font-size: 1.0125rem; }
+.article-content-full.zoom-100 { font-size: 1.125rem; }
+.article-content-full.zoom-110 { font-size: 1.2375rem; }
+.article-content-full.zoom-125 { font-size: 1.40625rem; }
+.article-content-full.zoom-150 { font-size: 1.6875rem; }
+
+/* Modo Leitura (Full Screen) */
+.reading-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--background-color);
+    z-index: 9999;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.reading-mode .article-full {
+    max-width: 800px;
+    margin: 0 auto;
+    box-shadow: none;
+    border: none;
+}
+
+.reading-mode .zoom-controls {
+    top: 1rem;
+    right: 1rem;
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
+    body {
+        padding-top: 60px;
+    }
+    
     .article-container {
         padding: 1rem;
+    }
+    
+    .article-header-full {
+        padding: 2rem 1.5rem 1.5rem;
     }
     
     .article-title-full {
@@ -325,20 +499,12 @@
     }
     
     .article-content-full {
+        padding: 2rem 1.5rem;
         font-size: 1rem;
     }
     
-    .article-actions {
-        flex-direction: column;
-    }
-    
-    .action-btn {
-        width: 100%;
-        text-align: center;
-    }
-    
     .article-content-full h1 {
-        font-size: 1.7rem;
+        font-size: 1.8rem;
     }
     
     .article-content-full h2 {
@@ -348,55 +514,167 @@
     .article-content-full h3 {
         font-size: 1.3rem;
     }
+    
+    .comments-section {
+        padding: 1.5rem;
+    }
+    
+    .article-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-btn {
+        justify-content: center;
+    }
+    
+    .zoom-controls {
+        top: 70px;
+        right: 1rem;
+    }
 }
 
-/* Estilo de impressão */
-@media print {
-    .navbar, .article-footer {
-        display: none;
+@media (max-width: 480px) {
+    .article-header-full {
+        padding: 1.5rem 1rem 1rem;
     }
     
-    .article-container {
-        max-width: none;
-        padding: 0;
-    }
-    
-    .article-full {
-        padding: 0;
+    .article-title-full {
+        font-size: 1.6rem;
     }
     
     .article-content-full {
-        font-size: 12pt;
-        line-height: 1.6;
-        font-family: 'Cambria', 'Times New Roman', serif;
+        padding: 1.5rem 1rem;
     }
     
-    .article-content-full pre {
-        background: white;
-        color: black;
-        border: 1px solid #ccc;
+    .article-meta-full {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .comments-section {
+        padding: 1rem;
     }
 }
 
-/* Garantir que Cambria Math funcione */
-@font-face {
-    font-family: 'Cambria Math';
-    font-style: normal;
-    font-weight: normal;
-    src: local('Cambria Math'), local('CambriaMath');
+/* Animações Suaves */
+.article-content-full {
+    animation: fadeInUp 0.6s ease-out;
 }
 
-.article-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: white;
-    min-height: 100vh;
-    margin-top: 20px; /* Espaço do header fixo */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.article-full {
-    padding: 2rem 0;
+/* Scrollbar Personalizada */
+.article-content-full::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Resto do CSS do artigo-completo mantém igual... */
+.article-content-full::-webkit-scrollbar-track {
+    background: var(--surface-color);
+}
+
+.article-content-full::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+.article-content-full::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Highlighter para texto selecionado */
+.article-content-full ::selection {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.article-content-full ::-moz-selection {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+/* Estilos específicos para conteúdo do Quill */
+.article-content-full .ql-editor {
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
+    font-family: inherit;
+}
+
+.article-content-full .ql-align-center {
+    text-align: center;
+}
+
+.article-content-full .ql-align-right {
+    text-align: right;
+}
+
+.article-content-full .ql-align-justify {
+    text-align: justify;
+}
+
+.article-content-full .ql-indent-1 {
+    padding-left: 3em;
+}
+
+.article-content-full .ql-indent-2 {
+    padding-left: 6em;
+}
+
+.article-content-full .ql-indent-3 {
+    padding-left: 9em;
+}
+
+.article-content-full .ql-syntax {
+    background: #1a1a1a;
+    color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.article-content-full .ql-font-serif {
+    font-family: 'Times New Roman', serif;
+}
+
+.article-content-full .ql-font-monospace {
+    font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+/* Garantir que as imagens do Quill sejam responsivas */
+.article-content-full img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+/* Estilos para listas do Quill */
+.article-content-full ul, 
+.article-content-full ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.article-content-full li {
+    margin-bottom: 0.5rem;
+}
+
+/* Estilos para blocos de citação do Quill */
+.article-content-full blockquote {
+    border-left: 4px solid #000;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: #666;
+}

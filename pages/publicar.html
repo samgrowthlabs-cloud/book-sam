@@ -6,6 +6,8 @@
     <title>Publicar - Enciclopédia Financeira</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/publicar.css">
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
@@ -40,12 +42,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="artigoConteudo">Conteúdo (Markdown):</label>
-                            <textarea id="artigoConteudo" placeholder="Digite seu artigo em Markdown..." required></textarea>
-                            <div class="markdown-help">
+                            <label for="artigoConteudo">Conteúdo:</label>
+                            <div id="editor-container">
+                                <!-- O editor Quill será injetado aqui -->
+                            </div>
+                            <div class="editor-help">
                                 <small>
-                                    <strong>Dica:</strong> Use Markdown para formatar seu texto. 
-                                    <br>**negrito**, *itálico*, # Título, ## Subtítulo, - lista, 1. lista numerada, `código`
+                                    <strong>Dica:</strong> Use os botões da barra de ferramentas para formatar seu texto.
                                 </small>
                             </div>
                         </div>
@@ -103,17 +106,15 @@
                 </div>
 
                 <div id="publishMessage" class="message"></div>
-                
-                <div id="publishMessage" class="message"></div>
             </div>
         </div>
     </main>
 
+    <!-- Quill.js -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/publicar.js"></script>
     <script src="../js/header.js"></script>
-
-    
 </body>
 </html>
