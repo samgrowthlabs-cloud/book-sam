@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil do Autor - Enciclopédia Financeira</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/perfil-autor.css">
+</head>
+<body>
+    <!-- Header será injetado automaticamente -->
+
+    <main class="profile-container">
+        <div class="profile-header" id="profileHeader">
+            <div class="loading-profile">
+                <p>Carregando perfil do autor...</p>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div class="articles-section">
+                <h2 class="section-title">Artigos Publicados</h2>
+                <div class="articles-grid" id="articlesGrid">
+                    <div class="loading-articles">
+                        <p>Carregando artigos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <button class="btn btn-secondary" onclick="voltarParaArtigo()">
+                ← Voltar ao Artigo
+            </button>
+            <button class="btn btn-primary" onclick="window.history.back()">
+                ← Voltar
+            </button>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/perfil-autor.js"></script>
+    <script src="../js/header.js"></script>
+</body>
+</html>

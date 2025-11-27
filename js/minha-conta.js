@@ -87,20 +87,28 @@ function exibirMeusArtigos(artigos) {
     }
     
     grid.innerHTML = artigos.map(artigo => `
-        <div class="content-card">
+        <div class="content-card artigo-card">
             <div class="content-header">
                 <h4>${artigo.titulo}</h4>
                 <div class="content-actions">
-                    <button class="btn-edit" onclick="editarArtigo(${artigo.id})">Editar</button>
-                    <button class="btn-delete" onclick="prepararExclusao('artigo', ${artigo.id})">Excluir</button>
+                    <button class="btn-edit" onclick="editarArtigo(${artigo.id})">
+                        <span>✏️</span> Editar
+                    </button>
+                    <button class="btn-delete" onclick="prepararExclusao('artigo', ${artigo.id})">
+                        <span>🗑️</span> Excluir
+                    </button>
                 </div>
             </div>
             <div class="content-meta">
-                <span class="content-categoria">${formatarCategoria(artigo.categoria)}</span>
-                <span class="content-data">Publicado em ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}</span>
+                <span class="content-categoria artigo-categoria">${formatarCategoria(artigo.categoria)}</span>
+                <span class="content-data">📅 ${new Date(artigo.created_at).toLocaleDateString('pt-BR')}</span>
             </div>
-            <div class="content-preview">
-                ${artigo.conteudo.substring(0, 150)}${artigo.conteudo.length > 150 ? '...' : ''}
+            <div class="content-preview artigo-preview">
+                ${artigo.conteudo ? artigo.conteudo.substring(0, 200) + (artigo.conteudo.length > 200 ? '...' : '') : 'Sem conteúdo'}
+            </div>
+            <div class="content-footer">
+                <span class="content-id">ID: ${artigo.id}</span>
+                <span class="content-visualizacoes">👁️ ${artigo.visualizacoes || 0} visualizações</span>
             </div>
         </div>
     `).join('');
@@ -124,20 +132,28 @@ function exibirMeusLivros(livros) {
     }
     
     grid.innerHTML = livros.map(livro => `
-        <div class="content-card">
+        <div class="content-card livro-card">
             <div class="content-header">
                 <h4>${livro.titulo}</h4>
                 <div class="content-actions">
-                    <button class="btn-edit" onclick="editarLivro(${livro.id})">Editar</button>
-                    <button class="btn-delete" onclick="prepararExclusao('livro', ${livro.id})">Excluir</button>
+                    <button class="btn-edit" onclick="editarLivro(${livro.id})">
+                        <span>✏️</span> Editar
+                    </button>
+                    <button class="btn-delete" onclick="prepararExclusao('livro', ${livro.id})">
+                        <span>🗑️</span> Excluir
+                    </button>
                 </div>
             </div>
             <div class="content-meta">
-                <span class="content-categoria">${livro.genero}</span>
-                <span class="content-data">Publicado em ${new Date(livro.created_at).toLocaleDateString('pt-BR')}</span>
+                <span class="content-categoria livro-categoria">${livro.genero}</span>
+                <span class="content-data">📅 ${new Date(livro.created_at).toLocaleDateString('pt-BR')}</span>
             </div>
-            <div class="content-preview">
+            <div class="content-preview livro-preview">
                 ${livro.descricao || 'Sem descrição disponível.'}
+            </div>
+            <div class="content-footer">
+                <span class="content-id">ID: ${livro.id}</span>
+                <span class="content-visualizacoes">📖 PDF disponível</span>
             </div>
         </div>
     `).join('');
@@ -244,52 +260,127 @@ async function editarLivro(livroId) {
 }
 
 async function salvarEdicao(event) {
+    console.log('=== INICIANDO SALVAMENTO ===');
     event.preventDefault();
     
     const id = document.getElementById('editId').value;
     const tipo = document.getElementById('editTipo').value;
-    const titulo = document.getElementById('editTitulo').value;
+    const titulo = document.getElementById('editTitulo').value.trim();
     
-    try {
-        if (tipo === 'artigo') {
-            const artigo = {
-                titulo: titulo,
-                categoria: document.getElementById('editCategoria').value,
-                conteudo: document.getElementById('editConteudo').value
-            };
-            
-            const { error } = await window.supabase
-                .from('artigos')
-                .update(artigo)
-                .eq('id', id);
+    console.log('Dados básicos:', { id, tipo, titulo });
+    
+    if (!titulo) {
+        alert('Por favor, preencha o título.');
+        return;
+    }
 
-            if (error) throw error;
+    try {
+        let dadosAtualizados = {};
+        let tabela = '';
+        
+        if (tipo === 'artigo') {
+            const categoria = document.getElementById('editCategoria').value;
+            const conteudo = document.getElementById('editConteudo').value.trim();
+            
+            if (!categoria || !conteudo) {
+                alert('Por favor, preencha todos os campos do artigo.');
+                return;
+            }
+            
+            dadosAtualizados = {
+                titulo: titulo,
+                categoria: categoria,
+                conteudo: conteudo
+            };
+            tabela = 'artigos';
             
         } else if (tipo === 'livro') {
-            const livro = {
-                titulo: titulo,
-                genero: document.getElementById('editGenero').value,
-                categoria: document.getElementById('editLivroCategoria').value,
-                descricao: document.getElementById('editDescricao').value,
-                link_pdf: document.getElementById('editLink').value
-            };
+            const genero = document.getElementById('editGenero').value;
+            const livroCategoria = document.getElementById('editLivroCategoria').value;
+            const descricao = document.getElementById('editDescricao').value.trim();
+            const link = document.getElementById('editLink').value.trim();
             
-            const { error } = await window.supabase
-                .from('livros')
-                .update(livro)
-                .eq('id', id);
-
-            if (error) throw error;
+            // Validação manual para livros (já que removemos o required do HTML)
+            if (!genero || !livroCategoria) {
+                alert('Por favor, preencha o gênero e a categoria do livro.');
+                return;
+            }
+            
+            if (!link) {
+                alert('Por favor, informe o link do PDF.');
+                return;
+            }
+            
+            // Validação básica de URL
+            if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                alert('Por favor, informe uma URL válida (deve começar com http:// ou https://)');
+                return;
+            }
+            
+            dadosAtualizados = {
+                titulo: titulo,
+                genero: genero,
+                categoria: livroCategoria,
+                descricao: descricao,
+                link_pdf: link
+            };
+            tabela = 'livros';
         }
-        
+
+        console.log('Tentando atualizar:', { tabela, id, dadosAtualizados });
+
+        const { data, error } = await window.supabase
+            .from(tabela)
+            .update(dadosAtualizados)
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            console.error('Erro do Supabase:', error);
+            alert('Erro ao salvar alterações: ' + error.message);
+            return;
+        }
+
+        console.log('Sucesso! Dados atualizados:', data);
         alert('Alterações salvas com sucesso!');
+        
+        // Fechar modal
         document.getElementById('editModal').style.display = 'none';
-        carregarMeusConteudos();
+        
+        // Recarregar conteúdos
+        await carregarMeusConteudos();
         
     } catch (error) {
-        console.error('Erro ao salvar edição:', error);
-        alert('Erro ao salvar alterações');
+        console.error('Erro inesperado:', error);
+        alert('Erro inesperado ao salvar alterações: ' + error.message);
     }
+}
+
+// Adicione esta função para feedback visual
+function mostrarMensagemSucesso(mensagem) {
+    // Criar elemento de mensagem
+    const mensagemEl = document.createElement('div');
+    mensagemEl.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: #000000;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    mensagemEl.textContent = mensagem;
+    
+    document.body.appendChild(mensagemEl);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        mensagemEl.remove();
+    }, 3000);
 }
 
 function prepararExclusao(tipo, id) {

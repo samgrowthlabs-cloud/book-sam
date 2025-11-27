@@ -199,6 +199,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 2rem;
+    align-items: stretch; /* Garante que todos os cards tenham a mesma altura */
 }
 
 .book-card {
@@ -210,6 +211,10 @@ body {
     cursor: pointer;
     border: 1px solid #f0f0f0;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ocupa 100% da altura do grid */
+    min-height: 280px; /* Altura mínima consistente */
 }
 
 .book-card:hover {
@@ -224,6 +229,7 @@ body {
     font-size: 1.3rem;
     font-weight: 700;
     line-height: 1.3;
+    flex-shrink: 0; /* Não encolhe o título */
 }
 
 .book-meta {
@@ -231,8 +237,8 @@ body {
     gap: 0.75rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+    flex-shrink: 0; /* Não encolhe as tags */
 }
-
 .genero {
     background: #f0f0f0;
     color: #242424;
@@ -241,8 +247,8 @@ body {
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid #e0e0e0;
+    white-space: nowrap;
 }
-
 .categoria {
     background: #f8f8f8;
     color: #242424;
@@ -251,6 +257,7 @@ body {
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid #e0e0e0;
+    white-space: nowrap;
 }
 
 .book-card p {
@@ -258,6 +265,19 @@ body {
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
     line-height: 1.5;
+    flex-grow: 1; /* Ocupa o espaço disponível */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limita a 3 linhas */
+    -webkit-box-orient: vertical;
+}
+
+/* BOTÃO PERFEITAMENTE ALINHADO */
+.book-actions {
+    margin-top: auto; /* Empurra o botão para baixo */
+    flex-shrink: 0; /* Não encolhe o botão */
+    padding-top: 1rem; /* Espaço consistente acima do botão */
+    border-top: 1px solid #f0f0f0; /* Linha sutil para separar */
 }
 
 .read-btn {
@@ -272,7 +292,18 @@ body {
     font-weight: 500;
     transition: background-color 0.2s ease;
     font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
+
+/* Versão alternativa sem linha separadora */
+.book-card.no-divider .book-actions {
+    border-top: none;
+    padding-top: 0;
+}
+
 
 .read-btn:hover {
     background: #333333;
@@ -410,7 +441,7 @@ body {
     background: #333333;
 }
 
-/* RESPONSIVE DESIGN - MOBILE FIRST */
+/* RESPONSIVE DESIGN */
 @media (max-width: 1024px) {
     .container {
         padding: 1.5rem;
@@ -656,4 +687,170 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* === SELOS COM ÍCONES REAIS === */
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    position: relative;
+}
+
+.author-by {
+    color: #666;
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+.author-name {
+    font-weight: 700;
+    color: #000;
+    font-size: 1.05rem;
+    letter-spacing: -0.3px;
+}
+
+/* SELO VERIFICADO COM ÍCONE */
+.verified-badge-icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+}
+
+.verified-badge-icon .badge-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.verified-badge-icon .badge-glow {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    animation: pulse-glow 2s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Efeitos hover do verificado */
+.verified-badge-icon:hover .badge-img {
+    transform: scale(1.15);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+/* SELO NÃO VERIFICADO COM ÍCONE */
+.unverified-badge-icon {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+}
+
+.unverified-badge-icon .badge-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: contain;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: grayscale(0.3) brightness(0.8) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* Efeitos hover do não verificado */
+.unverified-badge-icon:hover .badge-img {
+    transform: scale(1.15);
+    filter: grayscale(0) brightness(1) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
+}
+
+/* Tooltip natural */
+.verified-badge-icon:hover::after,
+.unverified-badge-icon:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Container do autor */
+.article-author-full {
+    padding: 15px 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Versão para mobile */
+@media (max-width: 768px) {
+    .author-info {
+        gap: 8px;
+        font-size: 1rem;
+    }
+    
+    .verified-badge-icon,
+    .unverified-badge-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .verified-badge-icon .badge-glow {
+        width: 24px;
+        height: 24px;
+        top: -1px;
+        left: -1px;
+    }
+}
+
+/* Animações de entrada */
+@keyframes badge-pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.verified-badge-icon,
+.unverified-badge-icon {
+    animation: badge-pop-in 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Efeito de clique */
+.verified-badge-icon:active .badge-img,
+.unverified-badge-icon:active .badge-img {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
 }

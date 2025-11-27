@@ -6,7 +6,6 @@
     <title>Artigo - Enciclopédia Financeira</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/artigo-completo.css">
-    <link rel="stylesheet" href="../css/comentarios.css">
 </head>
 <body>
     <!-- Header será injetado automaticamente -->
@@ -37,44 +36,16 @@
                         📤 Compartilhar
                     </button>
                     <button class="action-btn" onclick="voltarParaArtigos()">
-                        ← Voltar
+                        ← Voltar para Artigos
                     </button>
                 </div>
             </footer>
         </article>
-
-        <!-- Seção de Comentários -->
-        <section class="comments-section" id="commentsSectionFull">
-            <div class="comments-header">
-                <h3>💬 Comentários</h3>
-                <span class="comments-count" id="commentsCountFull">0 comentários</span>
-            </div>
-
-            <!-- Formulário de Comentário -->
-            <form class="comment-form" id="commentFormFull">
-                <textarea 
-                    id="commentTextFull" 
-                    placeholder="Digite seu comentário aqui..."
-                    required
-                ></textarea>
-                <div class="comment-form-actions">
-                    <button type="submit" class="btn-comment">📤 Publicar Comentário</button>
-                </div>
-            </form>
-
-            <!-- Lista de Comentários -->
-            <div class="comments-list" id="commentsContainerFull">
-                <div class="comment-loading">
-                    <p>Carregando comentários...</p>
-                </div>
-            </div>
-        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/config.js"></script>
     <script src="../js/artigo-completo.js"></script>
-    <script src="../js/comentarios.js"></script>
     <script src="../js/header.js"></script>
 </body>
 </html>
