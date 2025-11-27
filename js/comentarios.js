@@ -1,3 +1,15 @@
+// comentarios.js - Adicione no início para debug
+console.log('comentarios.js carregado');
+
+// Verificar se Supabase está disponível
+if (typeof window.supabase === 'undefined') {
+    console.error('Supabase não está disponível para comentarios.js');
+} else {
+    console.log('Supabase disponível para comentarios.js');
+}
+
+
+
 class ComentariosManager {
     constructor(tipoConteudo, conteudoId) {
         this.tipoConteudo = tipoConteudo; // 'artigo' ou 'livro'

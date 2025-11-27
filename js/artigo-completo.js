@@ -127,6 +127,50 @@ async function exibirArtigoCompleto(artigo) {
             console.error('Erro ao inicializar controles de zoom:', error);
         }
     }, 1000);
+    
+    // INICIALIZAR COMENTÁRIOS - ADICIONE ESTA PARTE
+    setTimeout(() => {
+        inicializarComentarios(artigo.id);
+    }, 1500);
+}
+
+// ADICIONE esta função para inicializar comentários
+function inicializarComentarios(artigoId) {
+    console.log('Inicializando comentários para artigo:', artigoId);
+    
+    // Verificar se o sistema de comentários está disponível
+    if (typeof ComentariosManager !== 'undefined') {
+        try {
+            window.comentariosManager = new ComentariosManager('artigo', artigoId);
+            window.comentariosManager.init();
+            console.log('Sistema de comentários inicializado com sucesso');
+        } catch (error) {
+            console.error('Erro ao inicializar comentários:', error);
+        }
+    } else {
+        console.warn('Sistema de comentários não disponível - ComentariosManager não encontrado');
+        
+        // Fallback básico para comentários
+        inicializarComentariosFallback();
+    }
+}
+
+// Fallback básico para comentários
+function inicializarComentariosFallback() {
+    const commentForm = document.getElementById('commentFormFull') || document.getElementById('commentForm');
+    
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const commentText = document.getElementById('commentTextFull') || document.getElementById('commentText');
+            
+            if (commentText && commentText.value.trim()) {
+                alert('Comentário enviado! (Sistema de comentários em desenvolvimento)');
+                commentText.value = '';
+            }
+        });
+        console.log('Fallback de comentários inicializado');
+    }
 }
 
 function formatarCategoria(categoria) {
@@ -187,8 +231,14 @@ function resetarZoom() {
     atualizarZoom();
 }
 
+// CORRIJA a função atualizarZoom - use o ID correto
 function atualizarZoom() {
-    const content = document.getElementById('articleContent');
+    // Tente primeiro com o ID novo, depois com o fallback
+    let content = document.getElementById('articleContentFull');
+    if (!content) {
+        content = document.getElementById('articleContent'); // Fallback para ID antigo
+    }
+    
     const zoomLevel = document.querySelector('.zoom-level');
     
     if (content && zoomLevel) {
@@ -198,6 +248,11 @@ function atualizarZoom() {
         
         zoomLevel.textContent = `${currentZoom}%`;
         console.log('Zoom atualizado para:', currentZoom + '%');
+        console.log('Elemento de conteúdo:', content);
+    } else {
+        console.error('Elemento de conteúdo ou zoom level não encontrado');
+        console.log('Content element:', content);
+        console.log('Zoom level element:', zoomLevel);
     }
 }
 
@@ -238,7 +293,13 @@ function toggleModoLeitura() {
 
 function compartilharArtigo() {
     try {
-        const titulo = document.getElementById('articleTitle').textContent;
+        // Tente primeiro com o ID novo, depois com o fallback
+        let titleElement = document.getElementById('articleTitleFull');
+        if (!titleElement) {
+            titleElement = document.getElementById('articleTitle'); // Fallback
+        }
+        
+        const titulo = titleElement ? titleElement.textContent : 'Artigo da Enciclopédia Financeira';
         const url = window.location.href;
         
         if (navigator.share) {
