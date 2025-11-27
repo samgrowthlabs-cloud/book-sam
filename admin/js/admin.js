@@ -1,4 +1,4 @@
-// admin.js - Versão RPC-compliant (usa rpc_* no Supabase)
+// admin.js - VERSÃO FINAL COM PROTEÇÃO COMPLETA
 class AdminSystem {
     constructor() {
         this.currentUser = null;
@@ -41,6 +41,28 @@ class AdminSystem {
         console.log('✅ Acesso permitido. Nível:', this.userLevel);
     }
 
+    // VERIFICAÇÃO DE SELF-ACTION (PROTEÇÃO PRINCIPAL)
+    isSelfAction(targetUserId) {
+        return this.currentUser && targetUserId.toString() === this.currentUser.id.toString();
+    }
+
+    // VERIFICA SE PODE AGIR NO USUÁRIO
+    canPerformActionOnUser(targetUser) {
+        if (!targetUser) return false;
+        
+        // 1. PROTEÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(targetUser.id)) {
+            return false;
+        }
+        
+        // 2. Moderador não pode agir em administradores
+        if (this.userLevel === 'moderator' && targetUser.access_level === 'admin') {
+            return false;
+        }
+        
+        return true;
+    }
+
     async loadUsers() {
         try {
             console.log('📥 Carregando usuários...');
@@ -54,7 +76,7 @@ class AdminSystem {
             this.allUsers = users || [];
             console.log(`✅ ${this.allUsers.length} usuários carregados`);
             this.displayUsers(this.allUsers);
-            this.updateStats(this.allUsers); // ATUALIZAR ESTATÍSTICAS
+            this.updateStats(this.allUsers);
         } catch (error) {
             console.error('❌ Erro ao carregar usuários:', error);
             alert('Erro ao carregar usuários');
@@ -62,8 +84,6 @@ class AdminSystem {
     }
 
     updateStats(users) {
-        console.log('📊 Atualizando estatísticas...', users);
-        
         const totalUsers = users.length;
         const bannedUsers = users.filter(u => u.is_banned).length;
         const adminUsers = users.filter(u => u.access_level === 'admin').length;
@@ -89,12 +109,12 @@ class AdminSystem {
         }
 
         container.innerHTML = users.map(user => {
-            const isCurrentUser = this.currentUser && user.id === this.currentUser.id;
+            const isCurrentUser = this.isSelfAction(user.id);
             const isAdmin = user.access_level === 'admin';
-            const canActOnUser = !isAdmin || (this.userLevel === 'admin' && !isCurrentUser);
+            const canActOnUser = this.canPerformActionOnUser(user);
 
             return `
-                <div class="user-card ${user.is_banned ? 'banned' : ''} ${isAdmin ? 'admin-protected' : ''}">
+                <div class="user-card ${user.is_banned ? 'banned' : ''} ${isAdmin ? 'admin-protected' : ''} ${isCurrentUser ? 'current-user' : ''}">
                     <div class="user-info">
                         <div class="user-header">
                             <h4>${user.usuario || 'Sem nome'} ${isCurrentUser ? '<span class="you-badge">(Você)</span>' : ''}</h4>
@@ -103,8 +123,8 @@ class AdminSystem {
                                 ${user.access_level === 'moderator' ? '<span class="badge moderator-badge">🛡️ Moderador</span>' : ''}
                                 ${user.verified ? '<span class="badge verified-badge">✅ Verificado</span>' : ''}
                                 ${user.is_banned ? '<span class="badge banned-badge">🚫 Banido</span>' : ''}
-                                ${user.is_deleted ? '<span class="badge deleted-badge">🗑️ Deletado</span>' : ''}
-                                ${!canActOnUser ? '<span class="badge protected-badge">🛡️ Protegido</span>' : ''}
+                                ${!canActOnUser && !isCurrentUser ? '<span class="badge protected-badge">🛡️ Protegido</span>' : ''}
+                                ${isCurrentUser ? '<span class="badge self-badge">👤 Você</span>' : ''}
                             </div>
                         </div>
                         
@@ -112,16 +132,23 @@ class AdminSystem {
                             <p><strong>ID:</strong> ${user.id}</p>
                             <p><strong>Nível:</strong> ${isAdmin ? '👑 Administrador' : user.access_level === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}</p>
                             <p><strong>Registro:</strong> ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                            <p><strong>Status:</strong> ${user.is_banned ? '🚫 Banido' : user.is_deleted ? '🗑️ Deletado' : '✅ Ativo'}</p>
+                            <p><strong>Status:</strong> ${user.is_banned ? '🚫 Banido' : '✅ Ativo'}</p>
                             <p><strong>Verificado:</strong> ${user.verified ? '✅ Sim' : '❌ Não'}</p>
                             
-                            ${!canActOnUser ? `
+                            ${isCurrentUser ? `
+                                <div class="self-info">
+                                    <strong>👤 SUA CONTA</strong>
+                                    <p>Você não pode realizar ações em sua própria conta por motivos de segurança.</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${!canActOnUser && !isCurrentUser ? `
                                 <div class="protected-info">
                                     <strong>🛡️ CONTA PROTEGIDA</strong>
                                     <p>Esta conta pertence a um administrador e só pode ser gerenciada por outros administradores.</p>
                                 </div>
                             ` : ''}
-
+                            
                             ${user.is_banned ? `
                                 <div class="ban-info">
                                     <strong>🚫 DETALHES DO BANIMENTO</strong>
@@ -131,61 +158,90 @@ class AdminSystem {
                                     ` : '<p><strong>Duração:</strong> Permanente</p>'}
                                 </div>
                             ` : ''}
-
-                            ${user.is_deleted ? `
-                                <div class="deleted-info">
-                                    <strong>🗑️ USUÁRIO DELETADO</strong>
-                                    <p>Conteúdo marcado como oculto. Registro mantido para auditoria.</p>
-                                </div>
-                            ` : ''}
                         </div>
                     </div>
                     
                     <div class="user-actions">
                         ${canActOnUser ? `
+                            <!-- BOTÕES VERIFICAR/DESVERIFICAR -->
                             ${!user.verified ? `
-                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">✅ Verificar</button>
+                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">
+                                    ✅ Verificar
+                                </button>
                             ` : `
-                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">❌ Desverificar</button>
+                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">
+                                    ❌ Desverificar
+                                </button>
                             `}
-                        ` : ''}
 
-                        ${canActOnUser ? `
+                            <!-- BOTÕES BANIR/DESBANIR -->
                             ${!user.is_banned ? `
-                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">🚫 Banir</button>
+                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">
+                                    🚫 Banir
+                                </button>
                             ` : `
-                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">✅ Desbanir</button>
+                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">
+                                    ✅ Desbanir
+                                </button>
                             `}
                         ` : ''}
 
+                        <!-- BOTÕES APENAS PARA ADMIN -->
                         ${this.userLevel === 'admin' && canActOnUser ? `
-                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">🗑️ Excluir</button>
+                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">
+                                🗑️ Excluir
+                            </button>
 
                             <div class="access-level-actions">
                                 <select onchange="adminSystem.changeAccessLevel('${user.id}', this.value)" class="access-select">
                                     <option value="user" ${user.access_level === 'user' ? 'selected' : ''}>👤 Usuário</option>
                                     <option value="moderator" ${user.access_level === 'moderator' ? 'selected' : ''}>🛡️ Moderador</option>
-                                    <option value="admin" ${user.access_level === 'admin' ? 'selected' : ''} ${isAdmin ? 'disabled' : ''}>👑 Admin</option>
+                                    <option value="admin" ${user.access_level === 'admin' ? 'selected' : ''}>👑 Admin</option>
                                 </select>
                             </div>
                         ` : ''}
 
-                        ${!canActOnUser ? `
+                        ${isCurrentUser ? `
+                            <div class="self-actions">
+                                <button class="btn btn-self" disabled>
+                                    👤 Sua Conta
+                                </button>
+                                <small>Você não pode realizar ações em si mesmo</small>
+                            </div>
+                        ` : ''}
+
+                        ${!canActOnUser && !isCurrentUser ? `
                             <div class="protected-actions">
-                                <button class="btn btn-protected" disabled>🛡️ Protegido</button>
+                                <button class="btn btn-protected" disabled>
+                                    🛡️ Protegido
+                                </button>
                                 <small>Apenas administradores podem gerenciar esta conta</small>
                             </div>
                         ` : ''}
 
-                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">📊 Detalhes</button>
+                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">
+                            📊 Detalhes
+                        </button>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // Ações via RPCs (usa funções seguras no DB)
+    // MÉTODOS DE AÇÃO COM PROTEÇÃO CONTRA SELF-ACTION
     async verifyUser(userId) {
+        // VERIFICAÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode verificar sua própria conta!');
+            return;
+        }
+
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Ação não permitida neste usuário!');
+            return;
+        }
+
         try {
             const { error } = await window.supabase.rpc('rpc_verify_user', {
                 p_target: Number(userId),
@@ -202,6 +258,18 @@ class AdminSystem {
     }
 
     async unverifyUser(userId) {
+        // VERIFICAÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode desverificar sua própria conta!');
+            return;
+        }
+
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Ação não permitida neste usuário!');
+            return;
+        }
+
         try {
             const { error } = await window.supabase.rpc('rpc_verify_user', {
                 p_target: Number(userId),
@@ -218,10 +286,21 @@ class AdminSystem {
     }
 
     banUserPrompt(userId) {
-        // abre modal style (já existe modal no HTML). Preenche hidden inputs e mostra modal.
+        // VERIFICAÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode banir sua própria conta!');
+            return;
+        }
+
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Você não pode banir este usuário!');
+            return;
+        }
+
         const modal = document.getElementById('banModal');
         if (!modal) {
-            // fallback: prompt
+            // Fallback para prompt
             const reason = prompt('Digite o motivo do banimento:');
             if (!reason) return;
             const duration = prompt('Duração do banimento (dias). Digite "permanent" para banimento permanente:');
@@ -230,12 +309,17 @@ class AdminSystem {
             return;
         }
 
-        // popula form com target id
         modal.dataset.targetUser = userId;
         modal.style.display = 'block';
     }
 
     async banUser(userId, reason, duration) {
+        // VERIFICAÇÃO DUPLA (CLIENTE + SERVIDOR)
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode banir sua própria conta!');
+            return;
+        }
+
         try {
             let bannedUntil = null;
             if (duration !== 'permanent') {
@@ -261,6 +345,18 @@ class AdminSystem {
     }
 
     async unbanUser(userId) {
+        // VERIFICAÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode desbanir sua própria conta!');
+            return;
+        }
+
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Você não pode desbanir este usuário!');
+            return;
+        }
+
         try {
             const { error } = await window.supabase.rpc('rpc_unban_user', {
                 p_target: Number(userId),
@@ -277,25 +373,37 @@ class AdminSystem {
     }
 
     async deleteUser(userId) {
+        // VERIFICAÇÃO CONTRA SELF-ACTION
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode excluir sua própria conta!');
+            return;
+        }
+
         if (this.userLevel !== 'admin') {
             alert('❌ Apenas administradores podem excluir usuários!');
             return;
         }
 
-        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação ocultará conteúdo e marcará o usuário como deletado.')) {
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Você não pode excluir este usuário!');
+            return;
+        }
+
+        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
             return;
         }
 
         try {
-            // chama RPC de soft delete
-            const { error } = await window.supabase.rpc('rpc_soft_delete_user', {
+            // CHAMADA PARA SUA RPC DE DELETE (você precisa criar essa função)
+            const { error } = await window.supabase.rpc('rpc_delete_user', {
                 p_target: Number(userId),
                 p_reason: 'Deleted by admin via panel'
             });
             if (error) throw error;
 
             await this.loadUsers();
-            alert('✅ Usuário excluído (soft-delete) com sucesso!');
+            alert('✅ Usuário excluído com sucesso!');
         } catch (err) {
             console.error('Erro ao excluir usuário:', err);
             alert('❌ Erro ao excluir usuário: ' + (err.message || JSON.stringify(err)));
@@ -303,10 +411,23 @@ class AdminSystem {
     }
 
     async changeAccessLevel(userId, newLevel) {
+        // VERIFICAÇÃO CONTRA SELF-ACTION (IMPORTANTE!)
+        if (this.isSelfAction(userId)) {
+            alert('❌ Você não pode alterar seu próprio nível de acesso!');
+            return;
+        }
+
         if (this.userLevel !== 'admin') {
             alert('❌ Apenas administradores podem alterar níveis de acesso!');
             return;
         }
+
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!this.canPerformActionOnUser(user)) {
+            alert('❌ Você não pode alterar o nível deste usuário!');
+            return;
+        }
+
         try {
             const { error } = await window.supabase.rpc('rpc_set_access_level', {
                 p_target: Number(userId),
@@ -314,18 +435,19 @@ class AdminSystem {
             });
             if (error) throw error;
             await this.loadUsers();
-            alert('✅ Nível de acesso alterado!');
+            alert('✅ Nível de acesso alterado com sucesso!');
         } catch (err) {
-            console.error(err);
-            alert('❌ Erro ao alterar nível: ' + (err.message || JSON.stringify(err)));
+            console.error('Erro ao alterar nível de acesso:', err);
+            alert('❌ Erro ao alterar nível de acesso: ' + (err.message || JSON.stringify(err)));
         }
     }
 
     viewUserDetails(userId) {
-        const user = this.allUsers.find(u => u.id === userId);
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
         if (user) {
+            const isCurrentUser = this.isSelfAction(userId);
             const details = `
-👤 NOME: ${user.usuario || 'Sem nome'}
+👤 NOME: ${user.usuario || 'Sem nome'} ${isCurrentUser ? '(VOCÊ)' : ''}
 🆔 ID: ${user.id}
 🎯 NÍVEL: ${user.access_level === 'admin' ? '👑 Administrador' : user.access_level === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}
 📅 REGISTRO: ${new Date(user.created_at).toLocaleString('pt-BR')}
@@ -333,7 +455,6 @@ class AdminSystem {
 🚫 BANIDO: ${user.is_banned ? 'Sim' : 'Não'}
 ${user.is_banned ? `📋 MOTIVO BAN: ${user.ban_reason || 'Não especificado'}` : ''}
 ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleString('pt-BR')}` : ''}
-🗑️ DELETADO: ${user.is_deleted ? 'Sim' : 'Não'}
             `.trim();
             
             alert('📊 DETALHES DO USUÁRIO\n\n' + details);
@@ -367,12 +488,25 @@ ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleStr
                     alert('Usuário alvo inválido.');
                     return;
                 }
+
+                // VERIFICAÇÃO FINAL ANTES DE EXECUTAR
+                if (this.isSelfAction(targetId)) {
+                    alert('❌ Você não pode banir sua própria conta!');
+                    modal.style.display = 'none';
+                    return;
+                }
+
                 const reason = reasonInput.value.trim();
                 const duration = durationSelect.value;
 
+                if (!reason) {
+                    alert('Por favor, informe o motivo do banimento.');
+                    return;
+                }
+
                 await this.banUser(targetId, reason, duration);
                 
-                // limpar e fechar modal
+                // Limpar e fechar modal
                 reasonInput.value = '';
                 durationSelect.value = '7';
                 modal.style.display = 'none';
