@@ -1,9 +1,9 @@
-// admin.js - VERSÃO FINAL COM PROTEÇÃO COMPLETA
+// admin.js - SISTEMA COMPLETO COM PROTEÇÃO DE HIERARQUIA
 class AdminSystem {
     constructor() {
         this.currentUser = null;
         this.allUsers = [];
-        this.userLevel = ''; // 'admin' ou 'moderator'
+        this.userLevel = '';
     }
 
     async init() {
@@ -23,7 +23,6 @@ class AdminSystem {
         }
 
         this.currentUser = JSON.parse(userData);
-        console.log('👤 Usuário logado:', this.currentUser);
         
         const { data: user, error } = await window.supabase
             .from('usuarios')
@@ -32,31 +31,45 @@ class AdminSystem {
             .single();
 
         if (error || !user || (user.access_level !== 'admin' && user.access_level !== 'moderator')) {
-            alert('❌ Acesso negado. Apenas administradores e moderadores podem acessar esta página.');
+            alert('❌ Acesso negado. Apenas administradores e moderadores.');
             window.location.href = '../index.html';
             return;
         }
 
         this.userLevel = user.access_level;
-        console.log('✅ Acesso permitido. Nível:', this.userLevel);
     }
 
-    // VERIFICAÇÃO DE SELF-ACTION (PROTEÇÃO PRINCIPAL)
+    // VERIFICA SE É UMA AÇÃO EM SI MESMO
     isSelfAction(targetUserId) {
         return this.currentUser && targetUserId.toString() === this.currentUser.id.toString();
     }
 
-    // VERIFICA SE PODE AGIR NO USUÁRIO
+    // VERIFICA SE PODE AGIR NO USUÁRIO (MODERADOR NÃO PODE MEXER EM ADMINS)
     canPerformActionOnUser(targetUser) {
         if (!targetUser) return false;
         
-        // 1. PROTEÇÃO CONTRA SELF-ACTION
+        // 1. Não pode agir em si mesmo
         if (this.isSelfAction(targetUser.id)) {
             return false;
         }
         
-        // 2. Moderador não pode agir em administradores
+        // 2. Moderador NUNCA pode agir em administradores
         if (this.userLevel === 'moderator' && targetUser.access_level === 'admin') {
+            return false;
+        }
+        
+        return true;
+    }
+
+    // VERIFICA SE PODE AGIR NO CONTEÚDO (MODERADOR NÃO PODE MEXER EM CONTEÚDOS DE ADMINS)
+    canPerformActionOnContent(contentOwnerId) {
+        if (!contentOwnerId) return false;
+        
+        const contentOwner = this.allUsers.find(u => u.id.toString() === contentOwnerId.toString());
+        if (!contentOwner) return false;
+        
+        // Moderador NUNCA pode mexer em conteúdos de administradores
+        if (this.userLevel === 'moderator' && contentOwner.access_level === 'admin') {
             return false;
         }
         
@@ -65,7 +78,6 @@ class AdminSystem {
 
     async loadUsers() {
         try {
-            console.log('📥 Carregando usuários...');
             const { data: users, error } = await window.supabase
                 .from('usuarios')
                 .select('*')
@@ -74,11 +86,10 @@ class AdminSystem {
             if (error) throw error;
 
             this.allUsers = users || [];
-            console.log(`✅ ${this.allUsers.length} usuários carregados`);
             this.displayUsers(this.allUsers);
             this.updateStats(this.allUsers);
         } catch (error) {
-            console.error('❌ Erro ao carregar usuários:', error);
+            console.error('Erro ao carregar usuários:', error);
             alert('Erro ao carregar usuários');
         }
     }
@@ -112,50 +123,40 @@ class AdminSystem {
             const isCurrentUser = this.isSelfAction(user.id);
             const isAdmin = user.access_level === 'admin';
             const canActOnUser = this.canPerformActionOnUser(user);
+            const isProtectedAdmin = isAdmin && this.userLevel === 'moderator';
 
             return `
-                <div class="user-card ${user.is_banned ? 'banned' : ''} ${isAdmin ? 'admin-protected' : ''} ${isCurrentUser ? 'current-user' : ''}">
+                <div class="user-card ${user.is_banned ? 'banned' : ''} ${isProtectedAdmin ? 'admin-protected' : ''} ${isCurrentUser ? 'current-user' : ''}">
                     <div class="user-info">
                         <div class="user-header">
-                            <h4>${user.usuario || 'Sem nome'} ${isCurrentUser ? '<span class="you-badge">(Você)</span>' : ''}</h4>
+                            <h4>
+                                <a href="javascript:void(0)" onclick="adminSystem.viewUserContents('${user.id}')" class="user-name-link">
+                                    ${user.usuario || 'Sem nome'}
+                                </a>
+                                ${isCurrentUser ? '<span class="you-badge">(Você)</span>' : ''}
+                            </h4>
                             <div class="user-badges">
                                 ${isAdmin ? '<span class="badge admin-badge">👑 Admin</span>' : ''}
                                 ${user.access_level === 'moderator' ? '<span class="badge moderator-badge">🛡️ Moderador</span>' : ''}
                                 ${user.verified ? '<span class="badge verified-badge">✅ Verificado</span>' : ''}
                                 ${user.is_banned ? '<span class="badge banned-badge">🚫 Banido</span>' : ''}
-                                ${!canActOnUser && !isCurrentUser ? '<span class="badge protected-badge">🛡️ Protegido</span>' : ''}
+                                ${isProtectedAdmin ? '<span class="badge protected-badge">🛡️ Protegido</span>' : ''}
                                 ${isCurrentUser ? '<span class="badge self-badge">👤 Você</span>' : ''}
                             </div>
                         </div>
                         
                         <div class="user-details">
                             <p><strong>ID:</strong> ${user.id}</p>
-                            <p><strong>Nível:</strong> ${isAdmin ? '👑 Administrador' : user.access_level === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}</p>
+                            <p><strong>Email:</strong> ${user.email || 'Não informado'}</p>
+                            <p><strong>Nível:</strong> ${user.access_level}</p>
                             <p><strong>Registro:</strong> ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
                             <p><strong>Status:</strong> ${user.is_banned ? '🚫 Banido' : '✅ Ativo'}</p>
                             <p><strong>Verificado:</strong> ${user.verified ? '✅ Sim' : '❌ Não'}</p>
                             
-                            ${isCurrentUser ? `
-                                <div class="self-info">
-                                    <strong>👤 SUA CONTA</strong>
-                                    <p>Você não pode realizar ações em sua própria conta por motivos de segurança.</p>
-                                </div>
-                            ` : ''}
-                            
-                            ${!canActOnUser && !isCurrentUser ? `
-                                <div class="protected-info">
+                            ${isProtectedAdmin ? `
+                                <div class="protected-warning">
                                     <strong>🛡️ CONTA PROTEGIDA</strong>
-                                    <p>Esta conta pertence a um administrador e só pode ser gerenciada por outros administradores.</p>
-                                </div>
-                            ` : ''}
-                            
-                            ${user.is_banned ? `
-                                <div class="ban-info">
-                                    <strong>🚫 DETALHES DO BANIMENTO</strong>
-                                    <p><strong>Motivo:</strong> ${user.ban_reason || 'Não especificado'}</p>
-                                    ${user.banned_until ? `
-                                        <p><strong>Expira em:</strong> ${new Date(user.banned_until).toLocaleDateString('pt-BR')}</p>
-                                    ` : '<p><strong>Duração:</strong> Permanente</p>'}
+                                    <p>Moderadores não podem gerenciar contas de administradores.</p>
                                 </div>
                             ` : ''}
                         </div>
@@ -163,85 +164,58 @@ class AdminSystem {
                     
                     <div class="user-actions">
                         ${canActOnUser ? `
-                            <!-- BOTÕES VERIFICAR/DESVERIFICAR -->
+                            <!-- AÇÕES BÁSICAS (VERIFICAR/DESVERIFICAR) -->
                             ${!user.verified ? `
-                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">
-                                    ✅ Verificar
-                                </button>
+                                <button class="btn btn-verify" onclick="adminSystem.verifyUser('${user.id}')">✅ Verificar</button>
                             ` : `
-                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">
-                                    ❌ Desverificar
-                                </button>
+                                <button class="btn btn-unverify" onclick="adminSystem.unverifyUser('${user.id}')">❌ Desverificar</button>
                             `}
-
-                            <!-- BOTÕES BANIR/DESBANIR -->
+                            
+                            <!-- BANIR/DESBANIR -->
                             ${!user.is_banned ? `
-                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">
-                                    🚫 Banir
-                                </button>
+                                <button class="btn btn-ban" onclick="adminSystem.banUserPrompt('${user.id}')">🚫 Banir</button>
                             ` : `
-                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">
-                                    ✅ Desbanir
-                                </button>
+                                <button class="btn btn-unban" onclick="adminSystem.unbanUser('${user.id}')">✅ Desbanir</button>
                             `}
                         ` : ''}
 
-                        <!-- BOTÕES APENAS PARA ADMIN -->
+                        <!-- AÇÕES APENAS PARA ADMINISTRADORES -->
                         ${this.userLevel === 'admin' && canActOnUser ? `
-                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">
-                                🗑️ Excluir
-                            </button>
+                            <button class="btn btn-danger" onclick="adminSystem.deleteUser('${user.id}')">🗑️ Excluir</button>
+                            
+                            <select onchange="adminSystem.changeAccessLevel('${user.id}', this.value)" class="access-select">
+                                <option value="user" ${user.access_level === 'user' ? 'selected' : ''}>👤 Usuário</option>
+                                <option value="moderator" ${user.access_level === 'moderator' ? 'selected' : ''}>🛡️ Moderador</option>
+                                <option value="admin" ${user.access_level === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                            </select>
+                        ` : ''}
 
-                            <div class="access-level-actions">
-                                <select onchange="adminSystem.changeAccessLevel('${user.id}', this.value)" class="access-select">
-                                    <option value="user" ${user.access_level === 'user' ? 'selected' : ''}>👤 Usuário</option>
-                                    <option value="moderator" ${user.access_level === 'moderator' ? 'selected' : ''}>🛡️ Moderador</option>
-                                    <option value="admin" ${user.access_level === 'admin' ? 'selected' : ''}>👑 Admin</option>
-                                </select>
+                        ${!canActOnUser && !isCurrentUser ? `
+                            <div class="protected-actions">
+                                <button class="btn btn-protected" disabled>🛡️ Protegido</button>
+                                <small>${isProtectedAdmin ? 'Apenas administradores' : 'Ação não permitida'}</small>
                             </div>
                         ` : ''}
 
                         ${isCurrentUser ? `
                             <div class="self-actions">
-                                <button class="btn btn-self" disabled>
-                                    👤 Sua Conta
-                                </button>
+                                <button class="btn btn-self" disabled>👤 Sua Conta</button>
                                 <small>Você não pode realizar ações em si mesmo</small>
                             </div>
                         ` : ''}
 
-                        ${!canActOnUser && !isCurrentUser ? `
-                            <div class="protected-actions">
-                                <button class="btn btn-protected" disabled>
-                                    🛡️ Protegido
-                                </button>
-                                <small>Apenas administradores podem gerenciar esta conta</small>
-                            </div>
-                        ` : ''}
-
-                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">
-                            📊 Detalhes
-                        </button>
+                        <button class="btn btn-info" onclick="adminSystem.viewUserDetails('${user.id}')">📊 Detalhes</button>
+                        <button class="btn btn-contents" onclick="adminSystem.viewUserContents('${user.id}')">📚 Conteúdos</button>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // MÉTODOS DE AÇÃO COM PROTEÇÃO CONTRA SELF-ACTION
+    // AÇÕES DE USUÁRIO COM VERIFICAÇÃO DE PERMISSÃO
     async verifyUser(userId) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode verificar sua própria conta!');
-            return;
-        }
-
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Ação não permitida neste usuário!');
-            return;
-        }
-
+        if (!this.checkUserPermission(userId, 'verificar')) return;
+        
         try {
             const { error } = await window.supabase.rpc('rpc_verify_user', {
                 p_target: Number(userId),
@@ -250,26 +224,15 @@ class AdminSystem {
             });
             if (error) throw error;
             await this.loadUsers();
-            alert('✅ Usuário verificado com sucesso!');
+            alert('✅ Usuário verificado!');
         } catch (err) {
-            console.error('Erro ao verificar usuário:', err);
-            alert('❌ Erro ao verificar usuário: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
     }
 
     async unverifyUser(userId) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode desverificar sua própria conta!');
-            return;
-        }
-
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Ação não permitida neste usuário!');
-            return;
-        }
-
+        if (!this.checkUserPermission(userId, 'desverificar')) return;
+        
         try {
             const { error } = await window.supabase.rpc('rpc_verify_user', {
                 p_target: Number(userId),
@@ -278,48 +241,27 @@ class AdminSystem {
             });
             if (error) throw error;
             await this.loadUsers();
-            alert('✅ Verificação removida com sucesso!');
+            alert('✅ Verificação removida!');
         } catch (err) {
-            console.error('Erro ao remover verificação:', err);
-            alert('❌ Erro ao remover verificação: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
     }
 
     banUserPrompt(userId) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode banir sua própria conta!');
-            return;
-        }
+        if (!this.checkUserPermission(userId, 'banir')) return;
+        
+        const reason = prompt('Motivo do banimento:');
+        if (!reason) return;
+        
+        const duration = prompt('Duração (dias) ou "permanent":');
+        if (!duration) return;
 
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Você não pode banir este usuário!');
-            return;
-        }
-
-        const modal = document.getElementById('banModal');
-        if (!modal) {
-            // Fallback para prompt
-            const reason = prompt('Digite o motivo do banimento:');
-            if (!reason) return;
-            const duration = prompt('Duração do banimento (dias). Digite "permanent" para banimento permanente:');
-            if (!duration) return;
-            this.banUser(userId, reason, duration);
-            return;
-        }
-
-        modal.dataset.targetUser = userId;
-        modal.style.display = 'block';
+        this.banUser(userId, reason, duration);
     }
 
     async banUser(userId, reason, duration) {
-        // VERIFICAÇÃO DUPLA (CLIENTE + SERVIDOR)
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode banir sua própria conta!');
-            return;
-        }
-
+        if (!this.checkUserPermission(userId, 'banir')) return;
+        
         try {
             let bannedUntil = null;
             if (duration !== 'permanent') {
@@ -337,26 +279,15 @@ class AdminSystem {
             if (error) throw error;
 
             await this.loadUsers();
-            alert('✅ Usuário banido com sucesso!');
+            alert('✅ Usuário banido!');
         } catch (err) {
-            console.error('Erro ao banir usuário:', err);
-            alert('❌ Erro ao banir usuário: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
     }
 
     async unbanUser(userId) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode desbanir sua própria conta!');
-            return;
-        }
-
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Você não pode desbanir este usuário!');
-            return;
-        }
-
+        if (!this.checkUserPermission(userId, 'desbanir')) return;
+        
         try {
             const { error } = await window.supabase.rpc('rpc_unban_user', {
                 p_target: Number(userId),
@@ -365,69 +296,34 @@ class AdminSystem {
             if (error) throw error;
 
             await this.loadUsers();
-            alert('✅ Usuário desbanido com sucesso!');
+            alert('✅ Usuário desbanido!');
         } catch (err) {
-            console.error('Erro ao desbanir usuário:', err);
-            alert('❌ Erro ao desbanir usuário: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
     }
 
     async deleteUser(userId) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode excluir sua própria conta!');
-            return;
-        }
-
-        if (this.userLevel !== 'admin') {
-            alert('❌ Apenas administradores podem excluir usuários!');
-            return;
-        }
-
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Você não pode excluir este usuário!');
-            return;
-        }
-
-        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
-            return;
-        }
+        if (!this.checkUserPermission(userId, 'excluir')) return;
+        
+        if (!confirm('Tem certeza? Esta ação não pode ser desfeita.')) return;
 
         try {
-            // CHAMADA PARA SUA RPC DE DELETE (você precisa criar essa função)
             const { error } = await window.supabase.rpc('rpc_delete_user', {
                 p_target: Number(userId),
-                p_reason: 'Deleted by admin via panel'
+                p_reason: 'Deleted by admin'
             });
             if (error) throw error;
 
             await this.loadUsers();
-            alert('✅ Usuário excluído com sucesso!');
+            alert('✅ Usuário excluído!');
         } catch (err) {
-            console.error('Erro ao excluir usuário:', err);
-            alert('❌ Erro ao excluir usuário: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
     }
 
     async changeAccessLevel(userId, newLevel) {
-        // VERIFICAÇÃO CONTRA SELF-ACTION (IMPORTANTE!)
-        if (this.isSelfAction(userId)) {
-            alert('❌ Você não pode alterar seu próprio nível de acesso!');
-            return;
-        }
-
-        if (this.userLevel !== 'admin') {
-            alert('❌ Apenas administradores podem alterar níveis de acesso!');
-            return;
-        }
-
-        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
-        if (!this.canPerformActionOnUser(user)) {
-            alert('❌ Você não pode alterar o nível deste usuário!');
-            return;
-        }
-
+        if (!this.checkUserPermission(userId, 'alterar nível')) return;
+        
         try {
             const { error } = await window.supabase.rpc('rpc_set_access_level', {
                 p_target: Number(userId),
@@ -435,95 +331,273 @@ class AdminSystem {
             });
             if (error) throw error;
             await this.loadUsers();
-            alert('✅ Nível de acesso alterado com sucesso!');
+            alert('✅ Nível alterado!');
         } catch (err) {
-            console.error('Erro ao alterar nível de acesso:', err);
-            alert('❌ Erro ao alterar nível de acesso: ' + (err.message || JSON.stringify(err)));
+            alert('❌ Erro: ' + err.message);
         }
+    }
+
+    // VERIFICAÇÃO CENTRALIZADA DE PERMISSÕES
+    checkUserPermission(userId, action) {
+        const targetUser = this.allUsers.find(u => u.id.toString() === userId.toString());
+        
+        if (!targetUser) {
+            alert('❌ Usuário não encontrado!');
+            return false;
+        }
+
+        // 1. Verificar self-action
+        if (this.isSelfAction(userId)) {
+            alert(`❌ Você não pode ${action} sua própria conta!`);
+            return false;
+        }
+
+        // 2. Verificar se moderador está tentando agir em admin
+        if (this.userLevel === 'moderator' && targetUser.access_level === 'admin') {
+            alert(`❌ Moderadores não podem ${action} administradores!`);
+            return false;
+        }
+
+        // 3. Verificar permissões específicas
+        if (action === 'excluir' && this.userLevel !== 'admin') {
+            alert('❌ Apenas administradores podem excluir usuários!');
+            return false;
+        }
+
+        if (action === 'alterar nível' && this.userLevel !== 'admin') {
+            alert('❌ Apenas administradores podem alterar níveis de acesso!');
+            return false;
+        }
+
+        return true;
     }
 
     viewUserDetails(userId) {
         const user = this.allUsers.find(u => u.id.toString() === userId.toString());
         if (user) {
-            const isCurrentUser = this.isSelfAction(userId);
             const details = `
-👤 NOME: ${user.usuario || 'Sem nome'} ${isCurrentUser ? '(VOCÊ)' : ''}
+👤 NOME: ${user.usuario || 'Sem nome'}
+📧 EMAIL: ${user.email || 'Não informado'}
 🆔 ID: ${user.id}
-🎯 NÍVEL: ${user.access_level === 'admin' ? '👑 Administrador' : user.access_level === 'moderator' ? '🛡️ Moderador' : '👤 Usuário'}
+🎯 NÍVEL: ${user.access_level}
 📅 REGISTRO: ${new Date(user.created_at).toLocaleString('pt-BR')}
 ✅ VERIFICADO: ${user.verified ? 'Sim' : 'Não'}
 🚫 BANIDO: ${user.is_banned ? 'Sim' : 'Não'}
-${user.is_banned ? `📋 MOTIVO BAN: ${user.ban_reason || 'Não especificado'}` : ''}
-${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleString('pt-BR')}` : ''}
+${user.is_banned ? `📋 MOTIVO: ${user.ban_reason || 'Não especificado'}` : ''}
             `.trim();
             
             alert('📊 DETALHES DO USUÁRIO\n\n' + details);
         }
     }
 
-    setupEventListeners() {
-        console.log('🔧 Configurando event listeners...');
-        
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    modal.style.display = 'none';
-                    modal.dataset.targetUser = '';
-                }
-            });
-        });
+    // GESTÃO DE CONTEÚDOS COM PROTEÇÃO
+    async viewUserContents(userId) {
+        const user = this.allUsers.find(u => u.id.toString() === userId.toString());
+        if (!user) return;
 
-        // Ban modal submit
-        const banForm = document.getElementById('banForm');
-        if (banForm) {
-            banForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const modal = document.getElementById('banModal');
-                const targetId = modal?.dataset?.targetUser;
-                const reasonInput = document.getElementById('banReason');
-                const durationSelect = document.getElementById('banDuration');
+        try {
+            // Carregar artigos
+            const { data: artigos, error: artigosError } = await window.supabase
+                .from('artigos')
+                .select('*')
+                .eq('autor_id', userId)
+                .order('created_at', { ascending: false });
 
-                if (!targetId) {
-                    alert('Usuário alvo inválido.');
-                    return;
-                }
+            if (artigosError) throw artigosError;
 
-                // VERIFICAÇÃO FINAL ANTES DE EXECUTAR
-                if (this.isSelfAction(targetId)) {
-                    alert('❌ Você não pode banir sua própria conta!');
-                    modal.style.display = 'none';
-                    return;
-                }
+            // Carregar livros
+            const { data: livros, error: livrosError } = await window.supabase
+                .from('livros')
+                .select('*')
+                .eq('autor_id', userId)
+                .order('created_at', { ascending: false });
 
-                const reason = reasonInput.value.trim();
-                const duration = durationSelect.value;
+            if (livrosError) throw livrosError;
 
-                if (!reason) {
-                    alert('Por favor, informe o motivo do banimento.');
-                    return;
-                }
-
-                await this.banUser(targetId, reason, duration);
-                
-                // Limpar e fechar modal
-                reasonInput.value = '';
-                durationSelect.value = '7';
-                modal.style.display = 'none';
-                modal.dataset.targetUser = '';
-            });
+            this.showContentsModal(user, artigos || [], livros || []);
+            
+        } catch (error) {
+            console.error('Erro ao carregar conteúdos:', error);
+            alert('Erro ao carregar conteúdos');
         }
-
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-                e.target.dataset.targetUser = '';
-            }
-        });
-
-        console.log('✅ Event listeners configurados');
     }
 
+    showContentsModal(user, artigos, livros) {
+        if (!document.getElementById('contentsModal')) {
+            const modalHTML = `
+                <div id="contentsModal" class="modal">
+                    <div class="modal-content large-modal">
+                        <div class="modal-header">
+                            <h3>📚 Conteúdos de ${user.usuario}</h3>
+                            <span class="close">&times;</span>
+                        </div>
+                        <div class="modal-body" id="contentsModalBody">
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            document.getElementById('contentsModal').querySelector('.close').onclick = () => {
+                document.getElementById('contentsModal').style.display = 'none';
+            };
+            
+            window.onclick = (e) => {
+                if (e.target === document.getElementById('contentsModal')) {
+                    document.getElementById('contentsModal').style.display = 'none';
+                }
+            };
+        }
+
+        const canManageContent = this.canPerformActionOnContent(user.id);
+        const modalBody = document.getElementById('contentsModalBody');
+        
+        modalBody.innerHTML = `
+            <div class="contents-stats">
+                <div class="stat-item">
+                    <strong>${artigos.length}</strong> Artigos
+                </div>
+                <div class="stat-item">
+                    <strong>${livros.length}</strong> Livros
+                </div>
+                <div class="stat-item">
+                    <strong>${artigos.length + livros.length}</strong> Total
+                </div>
+            </div>
+
+            ${!canManageContent && user.access_level === 'admin' ? `
+                <div class="protected-content-warning">
+                    <strong>🛡️ CONTEÚDOS PROTEGIDOS</strong>
+                    <p>Moderadores não podem gerenciar conteúdos de administradores.</p>
+                </div>
+            ` : ''}
+
+            <div class="content-section">
+                <h4>📝 Artigos (${artigos.length})</h4>
+                ${artigos.length > 0 ? `
+                    <div class="content-list">
+                        ${artigos.map(artigo => `
+                            <div class="content-item">
+                                <div class="content-info">
+                                    <h5>${artigo.titulo || 'Sem título'}</h5>
+                                    <p>${new Date(artigo.created_at).toLocaleDateString('pt-BR')} • ${artigo.publicado ? '✅ Publicado' : '📝 Rascunho'}</p>
+                                </div>
+                                <div class="content-actions">
+                                    <button class="btn btn-sm" onclick="adminSystem.viewContentDetail('artigo', '${artigo.id}')">👁️ Ver</button>
+                                    ${canManageContent ? `
+                                        <button class="btn btn-sm btn-danger" onclick="adminSystem.deleteContent('artigo', '${artigo.id}', '${user.id}')">🗑️ Excluir</button>
+                                    ` : `
+                                        <button class="btn btn-sm btn-protected" disabled>🛡️ Protegido</button>
+                                    `}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p>Nenhum artigo publicado.</p>'}
+            </div>
+
+            <div class="content-section">
+                <h4>📚 Livros (${livros.length})</h4>
+                ${livros.length > 0 ? `
+                    <div class="content-list">
+                        ${livros.map(livro => `
+                            <div class="content-item">
+                                <div class="content-info">
+                                    <h5>${livro.titulo || 'Sem título'}</h5>
+                                    <p>${livro.autor || 'Autor não informado'} • ${new Date(livro.created_at).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="content-actions">
+                                    <button class="btn btn-sm" onclick="adminSystem.viewContentDetail('livro', '${livro.id}')">👁️ Ver</button>
+                                    ${canManageContent ? `
+                                        <button class="btn btn-sm btn-danger" onclick="adminSystem.deleteContent('livro', '${livro.id}', '${user.id}')">🗑️ Excluir</button>
+                                    ` : `
+                                        <button class="btn btn-sm btn-protected" disabled>🛡️ Protegido</button>
+                                    `}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p>Nenhum livro publicado.</p>'}
+            </div>
+        `;
+
+        document.getElementById('contentsModal').style.display = 'block';
+    }
+
+    async viewContentDetail(tipo, contentId) {
+        try {
+            let content, table;
+            
+            if (tipo === 'artigo') {
+                table = 'artigos';
+            } else if (tipo === 'livro') {
+                table = 'livros';
+            }
+
+            const { data, error } = await window.supabase
+                .from(table)
+                .select('*')
+                .eq('id', contentId)
+                .single();
+
+            if (error) throw error;
+            content = data;
+
+            if (content) {
+                const details = tipo === 'artigo' ? `
+📖 TÍTULO: ${content.titulo}
+📅 DATA: ${new Date(content.created_at).toLocaleString('pt-BR')}
+✅ STATUS: ${content.publicado ? 'Publicado' : 'Rascunho'}
+📂 CATEGORIA: ${content.categoria || 'Não definida'}
+
+📝 CONTEÚDO:
+${content.conteudo || 'Sem conteúdo'}
+                ` : `
+📖 TÍTULO: ${content.titulo}
+✍️ AUTOR: ${content.autor || 'Não informado'}
+📚 GÊNERO: ${content.genero || 'Não informado'}
+📅 DATA: ${new Date(content.created_at).toLocaleString('pt-BR')}
+
+📖 DESCRIÇÃO:
+${content.descricao || 'Sem descrição'}
+                `;
+
+                alert(`DETALHES DO ${tipo.toUpperCase()}\n\n${details}`);
+            }
+        } catch (error) {
+            alert('Erro ao carregar conteúdo');
+        }
+    }
+
+    async deleteContent(tipo, contentId, ownerId) {
+        // VERIFICAR SE PODE EXCLUIR O CONTEÚDO
+        if (!this.canPerformActionOnContent(ownerId)) {
+            alert('❌ Você não tem permissão para excluir este conteúdo!');
+            return;
+        }
+
+        if (!confirm(`Excluir este ${tipo}?`)) return;
+
+        try {
+            let table = tipo === 'artigo' ? 'artigos' : 'livros';
+            
+            const { error } = await window.supabase
+                .from(table)
+                .delete()
+                .eq('id', contentId);
+
+            if (error) throw error;
+
+            alert(`✅ ${tipo} excluído!`);
+            // Fechar modal
+            document.getElementById('contentsModal').style.display = 'none';
+            
+        } catch (error) {
+            alert('❌ Erro ao excluir conteúdo');
+        }
+    }
+
+    // FILTROS E BUSCA
     filterByType(type) {
         let filtered = [];
         switch (type) {
@@ -549,7 +623,8 @@ ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleStr
             this.updateStats(this.allUsers);
         } else {
             const filtered = this.allUsers.filter(user => 
-                user.usuario && user.usuario.toLowerCase().includes(searchTerm)
+                user.usuario && user.usuario.toLowerCase().includes(searchTerm) ||
+                user.email && user.email.toLowerCase().includes(searchTerm)
             );
             this.displayUsers(filtered);
             this.updateStats(filtered);
@@ -561,6 +636,19 @@ ${user.banned_until ? `⏰ BAN EXPIRA: ${new Date(user.banned_until).toLocaleStr
         if (searchInput) searchInput.value = '';
         this.displayUsers(this.allUsers);
         this.updateStats(this.allUsers);
+    }
+
+    setupEventListeners() {
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+
+        const searchInput = document.getElementById('userSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterUsers());
+        }
     }
 }
 

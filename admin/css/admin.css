@@ -451,3 +451,63 @@
     color: #666;
     font-size: 0.8rem;
 }
+
+.user-name-link {
+    color: #2c3e50;
+    text-decoration: none;
+    border-bottom: 1px dashed #3498db;
+    cursor: pointer;
+}
+
+.user-name-link:hover {
+    color: #3498db;
+}
+
+.large-modal {
+    max-width: 90%;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.contents-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.content-section {
+    margin-bottom: 2rem;
+}
+
+.content-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.content-info h5 {
+    margin: 0;
+}
+
+.content-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
