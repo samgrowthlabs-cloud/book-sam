@@ -18,7 +18,7 @@ class AdminSystem {
         const userData = localStorage.getItem('usuarioLogado');
         if (!userData) {
             alert('❌ Você precisa estar logado para acessar o painel admin');
-            window.location.href = '../login.html';
+            window.location.href = '../js/login.html';
             return;
         }
 
